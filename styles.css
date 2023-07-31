@@ -1,0 +1,157 @@
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin: 20px;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+h1 {
+  color: #007bff;
+}
+
+.team-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.team {
+  width: 48%;
+}
+
+.team-section {
+  width: 48%; /* Adjust the width as needed */
+  margin: 20px;
+}
+
+.team-section h2 {
+  color: #007bff;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+table, th, td {
+  border: 1px solid black;
+}
+
+th, td {
+  padding: 8px;
+}
+
+th {
+  background-color: #f2f2f2;
+}
+
+.add-player-section {
+  margin: 20px;
+}
+
+.add-player-section h2 {
+  color: #007bff;
+}
+
+.add-player-section label {
+  margin-right: 8px;
+}
+
+.add-player-section input, select {
+  margin: 4px;
+}
+
+.event-section {
+  margin: 20px;
+}
+
+.event-section h2 {
+  color: #007bff;
+}
+
+.event-section label {
+  margin-right: 8px;
+}
+
+.event-section input, select {
+  margin: 4px;
+}
+
+.event-table {
+  margin: 20px;
+}
+
+.event-table h2 {
+  color: #007bff;
+}
+
+.event-table table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.event-table table, th, td {
+  border: 1px solid black;
+}
+
+th, td {
+  padding: 8px;
+}
+
+th {
+  background-color: #f2f2f2;
+}
+
+.save-section {
+  margin: 20px;
+}
+
+.quarter-selection {
+  margin: 10px 0;
+}
+
+.quarter-selection button {
+  margin-right: 5px;
+  padding: 5px 10px;
+  font-size: 14px;
+}
+
+.quarter-selection button.active {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.timer-section {
+  margin-top: 20px;
+}
+
+.timer {
+  display: flex;
+  align-items: center;
+}
+
+.timer h2 {
+  margin-right: 10px;
+}
+
+.timer span {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 18px;
+}
+
+.timer button {
+  margin-left: 10px;
+  padding: 5px 10px;
+  font-size: 14px;
+}
+
+#videoPlayer {
+  width: 640px; /* 设置播放器的宽度 */
+  height: 360px; /* 设置播放器的高度 */
+}
