@@ -2,25 +2,34 @@ let editedPlayer = null;
 let teamAName = "Team A";
 let teamBName = "Team B";
 const eventTypes = {
-  "3分球出手": ["进球", "不进"],
-  "2分球出手": ["进球", "不进"],
+  "3分球出手": ["不进", "进球", "球进加罚"],
+  "2分球出手": ["不进", "进球", "球进加罚"],
   "罚球出手": ["进球", "不进"],
   "犯规": ["普通犯规未犯满", "普通犯规犯满", "投篮犯规", "进攻犯规", "技术犯规", "违体犯规进攻", "违体犯规防守"],
   "失误": ["违例", "出界"],
-  "篮板": ["前场", "后场"],
+  "篮板": ["后场", "前场"],
   "助攻": ["2分","3分"],
   "盖帽": ["2分","3分"],
   "抢断": [],
   "换人": []
 };
-const eventTypesWithTarget = ["犯规", "助攻", "抢断", "盖帽", "换人"]
+const eventTypeNames = ["2分球出手", "3分球出手", "罚球出手", "助攻", "抢断", "犯规", "失误", "换人", "盖帽", "篮板"];
+const eventTypesWithTarget = ["犯规", "助攻", "抢断", "盖帽", "换人"];
 
 // 获取视频文件输入框和视频播放器
 const videoFileInput = document.getElementById("videoFileInput");
 const videoPlayer = document.getElementById("videoPlayer");
 const quarterButtons = document.querySelectorAll(".quarter-selection button");
-quarterButtons[0].classList.add("active");
+quarterButtons[1].classList.add("active");
 const quarterTimer = document.getElementById("quarterTimer");
+const eventButtons = document.querySelectorAll('.button-container button');
+const leftButtons = document.querySelectorAll('.left-button-container button');
+const rightButtons = document.querySelectorAll('.right-button-container button');
+const centeredButtons = document.querySelectorAll('.center-button-container button');
+const infoButtons = document.querySelectorAll('.info-button-container button');
+
+
+let rostersConfirmed = false;
 
 // 视频播放器状态
 let isPlaying = false;
@@ -35,32 +44,47 @@ let switchPlayerRow = 0;
 
 let startingLineupConfirmed = false;
 
-const teamAPlayers = [
-  { name: "A1", jerseyNumber: 11, position: "G" },
-  { name: "A2", jerseyNumber: 22, position: "F" },
-  { name: "A3", jerseyNumber: 33, position: "C" },
-  { name: "A4", jerseyNumber: 44, position: "F/C" },
-  { name: "A5", jerseyNumber: 55, position: "C" },
-  { name: "A6", jerseyNumber: 66, position: "G" },
-  { name: "A7", jerseyNumber: 77, position: "G" },
-  { name: "A8", jerseyNumber: 88, position: "G/F" },
-  { name: "A9", jerseyNumber: 99, position: "F" }
+buttonsConcealedFlag = false;
+
+// 事件记录全局变量
+let playerButtonSelectedFlag = false;
+let eventButtonSelectedFlag = false;
+let objectButtonSelectedFlag = false;
+let infoButtonSelectedFlag = false;
+let benchPlayersButtonShowedFlag = false;
+
+let event_team = "";
+let event_player = "";
+let event_type = "";
+let event_time = "";
+let event_info = "";
+let event_object = "";
+
+let lastButtonId = "";
+
+
+const teamAPlayersTemplate = [
+  { name: "13#队员1", position: "G" },
+  { name: "14#队员2", position: "F" },
+  { name: "77#队员3", position: "C" },
+  { name: "91#队员4", position: "F/C" },
+  { name: "35#队员5", position: "C" },
+  { name: "19#队员6", position: "G" },
+  { name: "20#队员7", position: "G/F" }
 ];
 
-const teamBPlayers = [
-  { name: "B1", jerseyNumber: 11, position: "G" },
-  { name: "B2", jerseyNumber: 22, position: "F" },
-  { name: "B3", jerseyNumber: 33, position: "C" },
-  { name: "B4", jerseyNumber: 44, position: "F" },
-  { name: "B5", jerseyNumber: 55, position: "G" },
-  { name: "B6", jerseyNumber: 66, position: "F/C" },
-  { name: "B7", jerseyNumber: 77, position: "F" },
-  { name: "B8", jerseyNumber: 88, position: "G" }
+const teamBPlayersTemplate = [
+  { name: "41#队员1", position: "G" },
+  { name: "56#队员2", position: "F" },
+  { name: "78#队员3", position: "C" },
+  { name: "97#队员4", position: "F" },
+  { name: "34#队员5", position: "G" },
+  { name: "33#队员6", position: "F/C" },
+  { name: "12#队员7", position: "F" }
 ];
 
-let teamAPlayersList = [...teamAPlayers]; // Create a copy of the original player list for Team A
-let teamBPlayersList = [...teamBPlayers]; // Create a copy of the original player list for Team B
-
+let teamAPlayersList = [...teamAPlayersTemplate]; // Create a copy of the original player list for Team A
+let teamBPlayersList = [...teamBPlayersTemplate]; // Create a copy of the original player list for Team B
 
 window.onload = function () {
   populatePlayersTable("teamATable", teamAPlayersList);
@@ -68,6 +92,7 @@ window.onload = function () {
   populateEventTypes("event");
   populatePlayersDropdown();
   populateEventInfoDropdown();
+  initCenteredButtons();
 
   // 给球队名字输入框添加事件监听器
   document.getElementById("teamNameInputA").addEventListener("input", function () {
@@ -85,23 +110,108 @@ window.onload = function () {
     populateObjectPlayersDropdown(this.value);
   });
 
-  document.getElementById("playerName").addEventListener("keydown", function (event) {
-    if (event.key === "Enter") {
-      addPlayer();
-    }
-  });
+//   document.getElementById("playerName").addEventListener("keydown", function (event) {
+//     if (event.key === "Enter") {
+//       addPlayer();
+//     }
+//   });
 
-  document.getElementById("playerJersey").addEventListener("keydown", function (event) {
-    if (event.key === "Enter") {
-      addPlayer();
+//   document.getElementById("playerPosition").addEventListener("keydown", function (event) {
+//     if (event.key === "Enter") {
+//       addPlayer();
+//     }
+//   });
+  
+  document.addEventListener("keydown", function(event) {
+      // "Esc"键
+    if (event.keyCode === 27) {
+      initCenteredButtons()
     }
-  });
-
-  document.getElementById("playerPosition").addEventListener("keydown", function (event) {
-    if (event.key === "Enter") {
-      addPlayer();
+    // Tab
+    if (event.keyCode === 9) {
+      event.preventDefault();
+      centeredButtonClicked(lastButtonId, true)
     }
-  });
+    // 回车键
+    if (event.keyCode === 13) {
+      addEventFromButtons()
+    }
+    // Q
+    if (event.keyCode === 81) {
+      centeredButtonClicked("leftButton1")
+    }
+    // W
+    if (event.keyCode === 87) {
+      centeredButtonClicked("leftButton2")
+    }
+    // A
+    if (event.keyCode === 65) {
+      centeredButtonClicked("leftButton3")
+    }
+    // S
+    if (event.keyCode === 83) {
+      centeredButtonClicked("leftButton4")
+    }
+    //D
+    if (event.keyCode === 68) {
+      centeredButtonClicked("leftButton5")
+    }
+    //I
+    if (event.keyCode === 73) {
+      centeredButtonClicked("rightButton1")
+    }
+    // O
+    if (event.keyCode === 79) {
+      centeredButtonClicked("rightButton2")
+    }
+    // J
+    if (event.keyCode === 74) {
+      centeredButtonClicked("rightButton3")
+    }
+    // K
+    if (event.keyCode === 75) {
+      centeredButtonClicked("rightButton4")
+    }
+    // L
+    if (event.keyCode === 76) {
+      centeredButtonClicked("rightButton5")
+    }
+    if (event.keyCode === 49) {
+      centeredButtonClicked("centeredButton1")
+    }
+    if (event.keyCode === 50) {
+      centeredButtonClicked("centeredButton2")
+    }
+    if (event.keyCode === 51) {
+      centeredButtonClicked("centeredButton3")
+    }
+    if (event.keyCode === 52) {
+      centeredButtonClicked("centeredButton4")
+    }
+    if (event.keyCode === 53) {
+      centeredButtonClicked("centeredButton5")
+    }
+    if (event.keyCode === 54) {
+      centeredButtonClicked("centeredButton6")
+    }
+    if (event.keyCode === 55) {
+      centeredButtonClicked("centeredButton7")
+    }
+    if (event.keyCode === 56) {
+      centeredButtonClicked("centeredButton8")
+    }
+    if (event.keyCode === 57) {
+      centeredButtonClicked("centeredButton9")
+    }
+    if (event.keyCode === 48) {
+      centeredButtonClicked("centeredButton0")
+    }
+    if (event.keyCode === 18) {
+      concealButtons()
+    }
+    
+    });
+    
 
   document.getElementById("event").addEventListener("change", function () {
     populateEventInfoDropdown();
@@ -109,11 +219,10 @@ window.onload = function () {
     populateObjectPlayersDropdown(selectedTeam);
   });
 
-//   const addPlayerButton = document.getElementById("addPlayerButton");
-//   addPlayerButton.addEventListener("click", addPlayer);
 
   // 更新 saveEdit 函数的调用
   document.getElementById("saveEditButton").addEventListener("click", saveEdit);
+  
   
   populateEventTeamDropdowns();
   videoPlayer.setAttribute("tabindex", "0");
@@ -122,8 +231,262 @@ window.onload = function () {
   videoPlayer.addEventListener("play", handlePlay);
   videoPlayer.addEventListener("pause", handlePause);
   videoPlayer.addEventListener("timeupdate", updateTime);
-  
+
 };
+
+function centeredButtonClicked(buttonId, tab = false) {
+    if (!rostersConfirmed) {
+      window.alert("请先确认名单");
+      return;
+    }
+
+    if (!timerActive) {
+      window.alert("请先开始计时");
+      return;
+    }
+    let index = Number(buttonId.split("Button")[1]) - 1;
+    if (tab && !infoButtonSelectedFlag) {
+        return;
+    }
+    else if (tab) {
+      if (eventTypes[event_type].length == 0) {
+          return;
+      }
+      index += 1;
+      index %= eventTypes[event_type].length;
+    }
+    // if (tab) {
+    //   index += 1;
+    //   if (buttonId.charAt(0) == "l" || buttonId.charAt(0) == "r") {
+    //     index = index % 12;
+    //   }
+    //   else if (buttonId.charAt(0) == "c") {
+    //     index = index % 9;
+    //   }
+    //   else {
+    //     index = index % 7;
+    //   }
+    // }
+    // console.log(index)
+    // console.log(lastButtonID)
+
+    // console.log(index)
+    // 选中按键高亮
+    
+    if (buttonId.charAt(0) == "l") {
+      if (!playerButtonSelectedFlag || !eventButtonSelectedFlag) {
+        buttonActiveControl(leftButtons, index, "active1");
+        playerButtonSelectedFlag = true;
+        event_player = teamAPlayersList[index].name;
+        event_team = teamAName;
+        // if (eventButtonSelectedFlag) {
+        //     showInfoButtons(event_type)
+        // }
+      }
+      else if (!objectButtonSelectedFlag && eventTypesWithTarget.includes(event_type)) {
+        if ((["抢断", "盖帽", "犯规"].includes(event_type) && event_team == teamBName) || (["助攻", "换人"].includes(event_type) && event_team == teamAName)) {
+          buttonActiveControl(leftButtons, index, "active3");
+          objectButtonSelectedFlag = true;
+          event_object = teamAPlayersList[index].name  
+        }
+      }
+      
+    }
+    else if (buttonId.charAt(0) == "r") {
+      if (!playerButtonSelectedFlag || !eventButtonSelectedFlag) {
+        buttonActiveControl(rightButtons, index, "active1");
+        playerButtonSelectedFlag = true;
+        event_player = teamBPlayersList[index].name;
+        event_team = teamBName;
+        // if (eventButtonSelectedFlag) {
+        //     showInfoButtons(event_type)
+        // }
+      }
+      else if (!objectButtonSelectedFlag && eventTypesWithTarget.includes(event_type)) {
+        if ((["抢断", "盖帽", "犯规"].includes(event_type) && event_team == teamAName) || (["助攻", "换人"].includes(event_type) && event_team == teamBName)) {
+          buttonActiveControl(rightButtons, index, "active3");
+          objectButtonSelectedFlag = true;
+          event_object = teamBPlayersList[index].name  
+        }
+      }
+    }
+    else if (buttonId.charAt(0) == "c") {
+      if (!eventButtonSelectedFlag || !playerButtonSelectedFlag) {
+        buttonActiveControl(centeredButtons, index, "active2");
+        eventButtonSelectedFlag = true;
+        event_type = eventTypeNames[index]
+        showInfoButtons(event_type)
+      }
+    }
+    else {
+        lastButtonId = `infoButton${index+1}`;
+        buttonActiveControl(infoButtons, index, "active4");
+        event_info = eventTypes[event_type][index]
+        infoButtonSelectedFlag = true;
+    }
+    console.log(event_team, event_player, event_type, event_info, event_object)
+    
+    
+    // videoPlayer.focus();
+}
+
+function buttonActiveControl(buttons, index, active_id) {
+  buttons.forEach(button => button.classList.remove(active_id));
+  buttons[index].classList.add(active_id);
+}
+
+function addEventFromButtons() {
+    result = eventChecker()
+    console.log(result)
+    if (result) {
+      if (event_info == "球进加罚") {
+        event_info = "进球";
+        addEventFromGlobal();
+        initCenteredButtons();
+        centeredButtonClicked("centeredButton3") // 罚球事件
+      }
+      else if (event_info == "不进") {
+        addEventFromGlobal();
+        initCenteredButtons();
+        centeredButtonClicked("centeredButton10") // 篮板事件
+      }
+      else {
+        addEventFromGlobal();
+        initCenteredButtons();
+      }
+    }
+}
+
+function showInfoButtons(event_type) {
+    for (var i = 0; i < 7; i++) {
+      var infoButton = document.getElementById('info' + 'Button' + (i + 1));
+      infoButton.style = "display:none;";
+    }
+    if (event_type === "2分") {
+      event_type = "2分球出手"
+    }
+    else if (event_type === "3分") {
+      event_type = "3分球出手"
+    }
+    else if (event_type === "罚球") {
+      event_type = "罚球出手"
+    }
+    infos = eventTypes[event_type]
+    for (var i = 0; i < infos.length; i++) {
+      var infoButton = document.getElementById('info' + 'Button' + (i + 1));
+      infoButton.style = "display:block;"
+      infoButton.innerText = infos[i];
+    }
+    if (infos.length) {
+      infoButtons.forEach(button => button.classList.remove("active4"));
+      infoButtons[0].classList.add("active4");
+      lastButtonId = "infoButton1";
+      event_info = infos[0];
+      infoButtonSelectedFlag = true;
+    }
+    
+}
+
+function eventChecker() {
+    if (!playerButtonSelectedFlag) {
+        window.alert("请选择球员");
+        return 0;
+    }
+    if (!eventButtonSelectedFlag) {
+        window.alert("请选择事件");
+        return 0;
+    }
+    if (!objectButtonSelectedFlag === "" && eventTypesWithTarget.includes(event_type)) {
+        window.alert("请选择对象球员");
+        return 0;
+    }
+    return 1
+}
+
+
+function initCenteredButtons() {
+  playerButtonSelectedFlag = false;
+  eventButtonSelectedFlag = false;
+  objectButtonSelectedFlag = false;
+  infoButtonSelectedFlag = false;
+  benchPlayersButtonShowedFlag = false;
+  event_team = "";
+  event_player = "";
+  event_time = "";
+  event_info = "";
+  event_object = "";
+  lastButtonId = "";
+  eventButtons.forEach(button => button.classList.remove("active1"));
+  eventButtons.forEach(button => button.classList.remove("active2"));
+  eventButtons.forEach(button => button.classList.remove("active3"));
+  eventButtons.forEach(button => button.classList.remove("active4"));
+  for (var i = 0; i < 12; i++) {
+    var leftPlayerButton = document.getElementById('left' + 'Button' + (i + 1));
+    var rightPlayerButton = document.getElementById('right' + 'Button' + (i + 1));
+    if (teamAPlayersList[i]) {
+      if (i < 5) {
+        leftPlayerButton.innerText = teamAPlayersList[i].name;
+        leftPlayerButton.style = "display:block;"
+    //   leftPlayerButton.style.backgroundColor = 'navy'   
+      }
+      else {
+        leftPlayerButton.innerText = teamAPlayersList[i].name;
+        leftPlayerButton.style = "display:none;"
+      }
+    } 
+    else {
+        leftPlayerButton.style = "display:none;"
+    }
+    if (teamBPlayersList[i]) {
+      if (i < 5) {
+        rightPlayerButton.innerText = teamBPlayersList[i].name;
+        rightPlayerButton.style = "display:block;"
+    //   leftPlayerButton.style.backgroundColor = 'navy'   
+      }
+      else {
+        rightPlayerButton.innerText = teamBPlayersList[i].name;
+        rightPlayerButton.style = "display:none;"
+      }
+    } 
+    else {
+        rightPlayerButton.style = "display:none;"
+    }
+  }
+  
+  for (var i = 0; i < 10; i++) {
+    var centeredPlayerButton = document.getElementById('centered' + 'Button' + (i + 1));
+    centeredPlayerButton.style = "display:block;";
+  }
+  for (var i = 0; i < 7; i++) {
+    var infoButton = document.getElementById('info' + 'Button' + (i + 1));
+    infoButton.style = "display:none;";
+  }
+}
+
+
+function concealButtons() {
+  if (!buttonsConcealedFlag) {
+    buttonsConcealedFlag = true;
+    for (var i = 0; i < 12; i++) {
+      var leftPlayerButton = document.getElementById('left' + 'Button' + (i + 1));
+      var rightPlayerButton = document.getElementById('right' + 'Button' + (i + 1));
+      leftPlayerButton.style = "display:none;"
+      rightPlayerButton.style = "display:none;"
+    }
+    for (var i = 0; i < 10; i++) {
+      var centeredButton = document.getElementById('centered' + 'Button' + (i + 1));
+      centeredButton.style = "display:none;"
+    }
+    for (var i = 0; i < 7; i++) {
+      var infoButton = document.getElementById('info' + 'Button' + (i + 1));
+      infoButton.style = "display:none;"
+    }
+  }
+  else {
+    initCenteredButtons()
+    buttonsConcealedFlag = false;
+  }
+}
 
 
 function createPlayerRow(player, tableId, rowIndex) {
@@ -140,13 +503,11 @@ function createPlayerRow(player, tableId, rowIndex) {
   row.setAttribute("data-team", tableId === "teamATable" ? teamAName : teamBName);
 
   const nameCell = row.insertCell();
-  const jerseyCell = row.insertCell();
   const positionCell = row.insertCell();
   const isOnCourtCell = row.insertCell();
   const actionsCell = row.insertCell();
 
   nameCell.innerText = player.name;
-  jerseyCell.innerText = player.jerseyNumber;
   positionCell.innerText = player.position;
   isOnCourtCell.innerText = rowIndex < 5 ? "是" : "";
   actionsCell.innerHTML = `<button onclick="editPlayer('${tableId === 'teamATable' ? teamAName : teamBName}', ${rowIndex})">编辑</button>
@@ -276,17 +637,14 @@ function addPlayer(event) {
   event.preventDefault();
   const teamName = document.getElementById("teamName").value;
   const nameInput = document.getElementById("playerName");
-  const jerseyInput = document.getElementById("playerJersey");
   const positionSelect = document.getElementById("playerPosition");
 
   console.log("281-----", teamName)
   const playerName = nameInput.value;
-  const jerseyNumber = jerseyInput.value;
   const playerPosition = positionSelect.value;
 
   const player = {
     name: playerName,
-    jerseyNumber: jerseyNumber,
     position: playerPosition
   };
 
@@ -304,34 +662,35 @@ function addPlayer(event) {
 
   populatePlayersDropdown();
   populateObjectPlayersDropdown(document.getElementById("team").value);
+  initCenteredButtons();
 
   nameInput.value = "";
-  jerseyInput.value = "";
   positionSelect.value = "";
 }
 
 function editPlayer(teamName, rowIndex) {
+  if (rostersConfirmed) {
+    window.alert("确认名单后不能编辑球员");
+    return
+  }
   console.log("196-------", teamName, rowIndex, teamAName, teamBName)
   const tableId = teamName === teamAName ? "teamATable" : "teamBTable";
   const table = document.getElementById(tableId);
   const row = table.rows[rowIndex + 1];
   const name = row.cells[0].innerText;
-  const jersey = row.cells[1].innerText;
-  const position = row.cells[2].innerText;
+  const position = row.cells[1].innerText;
   console.log("203------", table)
 
   const nameInput = document.getElementById("playerName");
-  const jerseyInput = document.getElementById("playerJersey");
   const positionInput = document.getElementById("playerPosition");
+  initCenteredButtons();
 
   nameInput.value = name;
-  jerseyInput.value = jersey;
   positionInput.value = position;
 
   // 设置当前编辑的球员信息
   editedPlayer = {
     name: name,
-    jerseyNumber: jersey,
     position: position,
     teamName: teamName, // 正确获取队伍名称
     rowIndex: rowIndex
@@ -342,16 +701,14 @@ function saveEdit() {
   if (!editedPlayer) return;
 
   const nameInput = document.getElementById("playerName");
-  const jerseyInput = document.getElementById("playerJersey");
   const positionInput = document.getElementById("playerPosition");
 
   const playerName = nameInput.value;
-  const jerseyNumber = jerseyInput.value;
   const playerPosition = positionInput.value;
+  initCenteredButtons();
 
   const updatedPlayer = {
     name: playerName,
-    jerseyNumber: jerseyNumber,
     position: playerPosition
   };
 
@@ -368,7 +725,6 @@ function saveEdit() {
 
   // 清空输入框
   nameInput.value = "";
-  jerseyInput.value = "";
   positionInput.value = "";
 }
 
@@ -392,6 +748,7 @@ function deletePlayer(teamName, rowIndex) {
 
   populatePlayersDropdown();
   populateObjectPlayersDropdown(document.getElementById("team").value);
+  initCenteredButtons();
 }
 
 function switchPlayer(teamName, rowIndex) {
@@ -420,6 +777,7 @@ function switchPlayer(teamName, rowIndex) {
 
         populatePlayersDropdown();
         populateObjectPlayersDropdown(document.getElementById("team").value);
+        initCenteredButtons();
     }
     else {
         switchPlayerCount === 0;
@@ -492,6 +850,7 @@ function deleteEvent(deleteButton) {
 }
 
 function confirmStartingLineup() {
+  rostersConfirmed = true;
   const startTime = "1 - 0 : 00";
   const teamAStartingPlayers = teamAPlayersList.slice(0, 5);
   const teamBStartingPlayers = teamBPlayersList.slice(0, 5);
@@ -518,6 +877,29 @@ function _addEvent(table, teamName, playerName, startTime, eventType, eventInfo,
     row.insertCell().innerText = eventType;
     row.insertCell().innerText = eventInfo;
     row.insertCell().innerText = eventTypesWithTarget.includes(eventType) ? objectPlayer : "";
+    const deleteButton = document.createElement("button");
+    deleteButton.innerText = "Delete";
+    deleteButton.addEventListener("click", function () {
+    deleteEvent(this);
+  });
+
+  row.insertCell().appendChild(deleteButton);
+}
+
+function addEventFromGlobal() {
+    const table = document.getElementById("eventTable");
+    const quarter = document.getElementById("quarter").value;
+    const minutes = document.getElementById("minutes").value;
+    const seconds = document.getElementById("seconds").value;
+    const row = table.insertRow();
+    const formattedTime = `${quarter} - ${minutes} : ${seconds}`;
+    
+    row.insertCell().innerText = event_team;
+    row.insertCell().innerText = event_player;
+    row.insertCell().innerText = formattedTime;
+    row.insertCell().innerText = event_type;
+    row.insertCell().innerText = event_info;
+    row.insertCell().innerText = eventTypesWithTarget.includes(event_type) ? event_object : "";
     const deleteButton = document.createElement("button");
     deleteButton.innerText = "Delete";
     deleteButton.addEventListener("click", function () {
@@ -590,6 +972,10 @@ function exportToCSV() {
 
 // 打开本地视频文件
 function playSelectedVideo() {
+  if (!rostersConfirmed) {
+      window.alert("请先确认名单");
+      return
+  }
   if (videoFileInput.files.length > 0) {
     const file = videoFileInput.files[0];
     if (file.type.startsWith("video/")) {
@@ -641,7 +1027,7 @@ function formatTime(timeInSeconds) {
 function selectQuarter(quarter) {
   currentQuarter = quarter;
   quarterButtons.forEach(button => button.classList.remove("active"));
-  quarterButtons[quarter - 1].classList.add("active");
+  quarterButtons[quarter].classList.add("active");
 //   updateTime();
   videoPlayer.focus();
 }
@@ -659,4 +1045,18 @@ function startTimer() {
 
 function onInputFileChange() {
     console.log("fuck")
+}
+
+function showButtons() {
+  const leftButtonsContainer = document.getElementById("leftButtonsContainer");
+  const rightButtonsContainer = document.getElementById("rightButtonsContainer");
+  leftButtonsContainer.style.display = "flex";
+  rightButtonsContainer.style.display = "flex";
+}
+
+function hideButtons() {
+  const leftButtonsContainer = document.getElementById("leftButtonsContainer");
+  const rightButtonsContainer = document.getElementById("rightButtonsContainer");
+  leftButtonsContainer.style.display = "none";
+  rightButtonsContainer.style.display = "none";
 }
