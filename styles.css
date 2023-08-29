@@ -160,6 +160,10 @@ th {
       height: 450px;
       background-color: #000;
     }
+    
+.left-button-container button {
+  background-color: rgba(255, 255, 255, 0.5);
+}
 
 /* 按钮区域样式 */
 #buttonsContainer {
@@ -492,5 +496,15 @@ th {
 #infoButton7 {
   top: 24%;
   left: 46%;
+  transform: translateY(-50%);
+}
+#highlightButton1 {
+  top: 92%;
+  left: 46%;
+  transform: translateY(-50%);
+}
+#highlightButton2 {
+  top: 92%;
+  left: 52%;
   transform: translateY(-50%);
 }

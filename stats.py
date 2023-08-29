@@ -1,9 +1,14 @@
 import numpy as np
 from plottable import Table, ColDef
+import matplotlib
 import matplotlib.pyplot as plt
 import argparse
 import json
 import pandas as pd
+from matplotlib.colors import LinearSegmentedColormap
+from plottable.cmap import normed_cmap
+from PIL import Image
+import matplotlib.font_manager as font_manager
 
 terms = {
     "name": "姓名",
@@ -37,7 +42,8 @@ args = parser.parse_args()
 
 config = json.load(open(args.config_file))
 quarter_time = config["quarter_time"]
-actual_quarter_time = 22
+scores = config["scores"]
+actual_quarter_time = 21
 quarters = config["quarters"]
 event_data = pd.read_csv(args.event_data,)
 event_data = event_data.fillna("")
@@ -395,58 +401,117 @@ print(player_stats_B)
 # for i in range(len(player_stats_A)):
 #     player_stats_A.loc[i,'得分'] = 0
 
-plt.rcParams['font.family']= ['Arial Unicode MS']   # 用黑体显示中文
+def plot_table(stats, fig, ax, team_name=""):
+    plt.rcParams['font.family'] = ['Arial Unicode MS']  # 用黑体显示中文
 
-row_colors = {
-    "top4": "#2d3636",
-    "top6": "#516362",
-    "playoffs": "#8d9386",
-    "relegation": "#c8ab8d",
-    "even": "#627979",
-    "odd": "#68817e",
-}
+    row_colors = {
+        "top4": "#2d3636",
+        "top6": "#516362",
+        "playoffs": "#8d9386",
+        "relegation": "#c8ab8d",
+        "even": "#627979",
+        "odd": "#68817e",
+    }
 
-bg_color = row_colors["odd"]
-text_color = "#e0e8df"
+    bg_color = row_colors["odd"]
+    text_color = "#FFFFFF"
 
-fig, ax = plt.subplots()
+    # fig, ax = plt.subplots()
 
-fig.set_facecolor(bg_color)
-ax.set_facecolor(bg_color)
+    fig.set_facecolor(bg_color)
+    ax.set_facecolor(bg_color)
 
-table_cols = ["上场时间", "得分", "篮板", "助攻", "抢断", "盖帽", "2分", "3分", "罚球",
-              "后场+前场篮板", "犯规", "失误", "造成犯规", "效率值", "在场得分(10回合)", "在场失分(10回合)"]
+    cmap = LinearSegmentedColormap.from_list(
+        name="bugw", colors=["#FF0000", "#e0e8df", "#00EE76"], N=256
+    )
+    cmap_r = LinearSegmentedColormap.from_list(
+        name="bugw", colors=["#00EE76", "#e0e8df", "#FF0000"], N=256
+    )
 
-table_col_defs = [
-    ColDef("姓名", width=1.3,  textprops={"ha": "left"}, title="VS\nEXCUSE ME"),
-    ColDef("上场时间", width=0.8),
-    ColDef("得分", width=0.5),
-    ColDef("助攻", width=0.5),
-    ColDef("篮板", width=0.5),
-    ColDef("抢断", width=0.5),
-    ColDef("盖帽", width=0.5),
-    ColDef("2分", width=0.5),
-    ColDef("3分", width=0.5),
-    ColDef("罚球", width=0.5),
-    ColDef("后场+前场篮板", width=0.8, title="后场+\n前场篮板"),
-    ColDef("被犯规", width=0.8),
-    ColDef("犯规", width=0.5),
-    ColDef("失误", width=0.5),
-    ColDef("效率值", width=0.5),
-    ColDef("在场得分(10回合)", width=1.0, title="在场得分\n(10回合)"),
-    ColDef("在场失分(10回合)", width=1.0, title="在场失分\n(10回合)")
-]
+    table_cols = ["上场时间", "得分", "篮板", "助攻", "抢断", "盖帽", "2分", "3分", "罚球",
+                  "后场+前场篮板", "犯规", "失误", "造成犯规", "效率值", "在场得分(10回合)", "在场失分(10回合)"]
+
+    table_col_defs = [
+        ColDef("姓名", width=1.3, textprops={"ha": "left", "weight": "bold"}, title=team_name),
+        ColDef("上场时间", width=0.8),
+        ColDef("得分", width=0.5),
+        ColDef("助攻", width=0.5),
+        ColDef("篮板", width=0.5),
+        ColDef("抢断", width=0.5),
+        ColDef("盖帽", width=0.5),
+        ColDef("2分", width=0.5),
+        ColDef("3分", width=0.5),
+        ColDef("罚球", width=0.5),
+        ColDef("后场+前场篮板", width=0.8, title="后场+\n前场篮板"),
+        ColDef("被犯规", width=0.8),
+        ColDef("犯规", width=0.5),
+        ColDef("失误", width=0.5),
+        ColDef("效率值", width=0.5, text_cmap=normed_cmap(stats["效率值"], cmap=cmap, num_stds=2)),
+        ColDef("在场得分(10回合)", width=1.0, title="在场得分\n(10回合)",
+               text_cmap=normed_cmap(stats["在场得分(10回合)"], cmap=cmap, num_stds=2)),
+        ColDef("在场失分(10回合)", width=1.0, title="在场失分\n(10回合)",
+               text_cmap=normed_cmap(stats["在场失分(10回合)"], cmap=cmap_r, num_stds=2))
+    ]
+
+    tab = Table(stats,
+          ax= ax,
+          column_definitions=table_col_defs,
+          row_dividers=True,
+          col_label_divider=False,
+          footer_divider=True,
+          columns=table_cols,
+          even_row_color=row_colors["even"],
+          footer_divider_kw={"color": bg_color, "lw": 2},
+          row_divider_kw={"color": bg_color, "lw": 2},
+          column_border_kw={"color": bg_color, "lw": 2},
+          # 如果设置字体需要添加"fontname": "Roboto"
+          textprops={"fontsize": 15, "ha": "center"}, )
+    return tab
+
+plt.rcParams["text.color"] = "#e0e8df"
+plt.rcParams['font.sans-serif'] = ['MFGeHeiNoncommercial']
 
 
-Table(player_stats_B, column_definitions=table_col_defs,
-    row_dividers=True,
-    col_label_divider=False,
-    footer_divider=True,
-    columns=table_cols,
-    even_row_color=row_colors["even"],
-    footer_divider_kw={"color": bg_color, "lw": 2},
-    row_divider_kw={"color": bg_color, "lw": 2},
-    column_border_kw={"color": bg_color, "lw": 2},
-    # 如果设置字体需要添加"fontname": "Roboto"
-    textprops={"fontsize": 16, "ha": "center"},)
+# fig = plt.figure(num=1, figsize=(20, 10),dpi=80)
+#
+# ax1 = fig.add_subplot(2,1,1)
+# ax2 = fig.add_subplot(2,1,2)
+#
+# table1 = plot_table(player_stats_A, fig, ax1, team_names[0])
+# table2 = plot_table(player_stats_B, fig, ax2, team_names[1])
+#
+#
+# plt.rcParams['font.sans-serif'] = ['MFGeHeiNoncommercial']
+# plt.title(label="{} {} {}\n___________________________________________________________________________________________________".format(team_names[0], scores, team_names[1]),
+#           fontsize=25,
+#           fontweight="bold",
+#           color="#e0e8df",
+#           y=2.22)
+# # plt.rcParams["text.color"] = "#000000"
+# plt.suptitle("8月8日 ABL篮球馆 {} JUSHOOP".format(61 * "   "), fontsize=19, color='#e0e8df', x=0.5, y=0.94, fontweight="bold")
+# # logo = Image.open('logo1.png')
+# # plt.imshow(logo)
+# for font in matplotlib.font_manager.fontManager.ttflist:
+#     print(font.name, '-', font.fname)
+# matplotlib.pyplot.subplots_adjust(left=0.02, bottom=0.001, right=0.982, top=0.893)
+
+
+# plt.show()
+
+fig, ax = plt.subplots(figsize=(20, 10),dpi=80)
+table = plot_table(player_stats_A, fig, ax, team_names[0])
+# table = plot_table(player_stats_B, fig, ax, team_names[1])
+plt.rcParams['font.sans-serif'] = ['MFGeHeiNoncommercial']
+plt.title(label="{} {} {}\n___________________________________________________________________________________________________".format(team_names[0], scores, team_names[1]),
+          fontsize=25,
+          fontweight="bold",
+          color="#e0e8df",
+          y=1)
+# plt.rcParams["text.color"] = "#000000"
+plt.suptitle("8月25日 ABL篮球馆 {} JUSHOOP".format(61 * "   "), fontsize=19, color='#e0e8df', x=0.5, y=0.94, fontweight="bold")
+# logo = Image.open('logo1.png')
+# plt.imshow(logo)
+# for font in matplotlib.font_manager.fontManager.ttflist:
+#     print(font.name, '-', font.fname)
+matplotlib.pyplot.subplots_adjust(left=0.02, bottom=0.001, right=0.982, top=0.893)
 plt.show()

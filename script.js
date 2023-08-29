@@ -27,6 +27,8 @@ const leftButtons = document.querySelectorAll('.left-button-container button');
 const rightButtons = document.querySelectorAll('.right-button-container button');
 const centeredButtons = document.querySelectorAll('.center-button-container button');
 const infoButtons = document.querySelectorAll('.info-button-container button');
+const highlightButtons = document.querySelectorAll('.highlight-button-container button');
+
 
 
 let rostersConfirmed = false;
@@ -42,7 +44,6 @@ let switchPlayerCount = 0;
 let switchPlayerTeamName = "";
 let switchPlayerRow = 0;
 
-let startingLineupConfirmed = false;
 
 buttonsConcealedFlag = false;
 
@@ -61,6 +62,9 @@ let event_info = "";
 let event_object = "";
 
 let lastButtonId = "";
+
+let isFastForward = false;
+let isFastRewind = false;
 
 
 const teamAPlayersTemplate = [
@@ -121,20 +125,61 @@ window.onload = function () {
 //       addPlayer();
 //     }
 //   });
+  document.addEventListener("keyup", function(event) {
+    if (event.keyCode === 39) {
+      event.preventDefault();
+      event.stopPropagation();
+      stopFastForward();
+    }
+    if (event.keyCode === 37) {
+      event.preventDefault();
+      event.stopPropagation();
+      stopFastRewind();
+    }
+  });
   
   document.addEventListener("keydown", function(event) {
       // "Esc"键
-    if (event.keyCode === 27) {
+    if (rostersConfirmed) {
+      if (event.keyCode === 27) {
+      event.preventDefault();
+      event.stopPropagation();
       initCenteredButtons()
     }
     // Tab
     if (event.keyCode === 9) {
       event.preventDefault();
+      event.stopPropagation();
       centeredButtonClicked(lastButtonId, true)
     }
     // 回车键
     if (event.keyCode === 13) {
+      event.preventDefault();
       addEventFromButtons()
+    }
+    // 空格
+    if (event.keyCode === 32) {
+      event.preventDefault();
+      if (isPlaying) {
+          console.log(121212)
+          handlePause()
+      }
+      else {
+          console.log(222222222)
+          handlePlay()
+      }
+    }
+    // 右方向键
+    if (event.keyCode === 39) {
+      event.preventDefault();
+      event.stopPropagation();
+      startFastForward();
+    }
+    // 左方向键
+    if (event.keyCode === 37) {
+      event.preventDefault();
+      event.stopPropagation();
+      startFastRewind();
     }
     // Q
     if (event.keyCode === 81) {
@@ -206,9 +251,14 @@ window.onload = function () {
     if (event.keyCode === 48) {
       centeredButtonClicked("centeredButton0")
     }
+    if (event.keyCode === 189) {
+      centeredButtonClicked("highlightButton1")
+    }
     if (event.keyCode === 18) {
       concealButtons()
     }
+    }
+    
     
     });
     
@@ -234,7 +284,36 @@ window.onload = function () {
 
 };
 
+function startFastForward() {
+      if (videoPlayer) {
+        isFastForward = true;
+        videoPlayer.playbackRate = 2;
+}
+}
+
+function stopFastForward() {
+      if (videoPlayer && isFastForward) {
+        isFastForward = false;
+        videoPlayer.playbackRate = 1;
+      }
+}
+
+function startFastRewind() {
+      if (videoPlayer) {
+        isFastRewind = true;
+        videoPlayer.playbackRate = -2;
+}
+}
+
+function stopFastRewind() {
+      if (videoPlayer && isFastRewind) {
+        isFastRewind = false;
+        videoPlayer.playbackRate = 1;
+      }
+}
+
 function centeredButtonClicked(buttonId, tab = false) {
+    console.log("111")
     if (!rostersConfirmed) {
       window.alert("请先确认名单");
       return;
@@ -249,29 +328,13 @@ function centeredButtonClicked(buttonId, tab = false) {
         return;
     }
     else if (tab) {
+      console.log("shit")
       if (eventTypes[event_type].length == 0) {
           return;
       }
       index += 1;
       index %= eventTypes[event_type].length;
     }
-    // if (tab) {
-    //   index += 1;
-    //   if (buttonId.charAt(0) == "l" || buttonId.charAt(0) == "r") {
-    //     index = index % 12;
-    //   }
-    //   else if (buttonId.charAt(0) == "c") {
-    //     index = index % 9;
-    //   }
-    //   else {
-    //     index = index % 7;
-    //   }
-    // }
-    // console.log(index)
-    // console.log(lastButtonID)
-
-    // console.log(index)
-    // 选中按键高亮
     
     if (buttonId.charAt(0) == "l") {
       if (!playerButtonSelectedFlag || !eventButtonSelectedFlag) {
@@ -318,11 +381,15 @@ function centeredButtonClicked(buttonId, tab = false) {
         showInfoButtons(event_type)
       }
     }
-    else {
+    else if (buttonId.charAt(0) == "i") {
         lastButtonId = `infoButton${index+1}`;
         buttonActiveControl(infoButtons, index, "active4");
         event_info = eventTypes[event_type][index]
         infoButtonSelectedFlag = true;
+    }
+    else if (buttonId.charAt(0) == "h") {
+        info = "bad"
+        addHighlight(info)
     }
     console.log(event_team, event_player, event_type, event_info, event_object)
     
@@ -771,6 +838,11 @@ function switchPlayer(teamName, rowIndex) {
             tableId = "teamBTable"
         }
         let temp = playerList[switchPlayerRow];
+        let player1 = playerList[Math.min(switchPlayerRow, rowIndex)].name
+        let player2 = playerList[Math.max(rowIndex, switchPlayerRow)].name
+        if ((rostersConfirmed) && (Math.min(switchPlayerRow, rowIndex) <= 4) && ((Math.max(switchPlayerRow, rowIndex) >= 5))) {
+          addSwitchEvent(teamName, player1, player2);   
+        }
         playerList[switchPlayerRow] = playerList[rowIndex];
         playerList[rowIndex] = temp;
         populatePlayersTable(tableId, playerList); // Update the table
@@ -812,6 +884,32 @@ function populateObjectPlayersDropdown(selectedTeam) {
     }
   });
   }
+}
+
+function addSwitchEvent(team, player1, player2) {
+  const eventType = document.getElementById("event").value;
+  const eventInfo = document.getElementById("eventInfo").value;
+  const quarter = document.getElementById("quarter").value;
+  const minutes = document.getElementById("minutes").value;
+  const seconds = document.getElementById("seconds").value;
+
+  const formattedTime = `${quarter} - ${minutes} : ${seconds}`;
+
+  const table = document.getElementById("eventTable");
+  const row = table.insertRow();
+  row.insertCell().innerText = team;
+  row.insertCell().innerText = player1;
+  row.insertCell().innerText = formattedTime;
+  row.insertCell().innerText = "换人";
+  row.insertCell().innerText = "";
+  row.insertCell().innerText = player2;
+  const deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete";
+  deleteButton.addEventListener("click", function () {
+    deleteEvent(this);
+  });
+
+  row.insertCell().appendChild(deleteButton);
 }
 
 function addEvent() {
@@ -877,6 +975,51 @@ function _addEvent(table, teamName, playerName, startTime, eventType, eventInfo,
     row.insertCell().innerText = eventType;
     row.insertCell().innerText = eventInfo;
     row.insertCell().innerText = eventTypesWithTarget.includes(eventType) ? objectPlayer : "";
+    const deleteButton = document.createElement("button");
+    deleteButton.innerText = "Delete";
+    deleteButton.addEventListener("click", function () {
+    deleteEvent(this);
+  });
+
+  row.insertCell().appendChild(deleteButton);
+}
+
+function addHighlight(info) {
+    const table = document.getElementById("eventTable");
+    const quarter = document.getElementById("quarter").value;
+    const minutes = document.getElementById("minutes").value;
+    const seconds = document.getElementById("seconds").value;
+    const row = table.insertRow();
+    const formattedTime = `${quarter} - ${minutes} : ${seconds}`;
+    
+    row.insertCell().innerText = "";
+    row.insertCell().innerText = "";
+    row.insertCell().innerText = formattedTime;
+    row.insertCell().innerText = "highlight";
+    row.insertCell().innerText = info;
+    row.insertCell().innerText = "";
+    const deleteButton = document.createElement("button");
+    deleteButton.innerText = "Delete";
+    deleteButton.addEventListener("click", function () {
+    deleteEvent(this);
+  });
+
+  row.insertCell().appendChild(deleteButton);
+}
+
+function addTimerEvent(quarter, quarterStartTime) {
+    const table = document.getElementById("eventTable");
+    
+    const startTime = Math.floor(quarterStartTime)
+    const row = table.insertRow();
+    const formattedTime = `1 - 0 : 0`;
+    
+    row.insertCell().innerText = "";
+    row.insertCell().innerText = "";
+    row.insertCell().innerText = formattedTime;
+    row.insertCell().innerText = "计时开始";
+    row.insertCell().innerText = startTime;
+    row.insertCell().innerText = quarter;
     const deleteButton = document.createElement("button");
     deleteButton.innerText = "Delete";
     deleteButton.addEventListener("click", function () {
@@ -990,18 +1133,20 @@ function playSelectedVideo() {
     }
   }
   videoPlayer.focus();
+  isPlaying = true;
 }
 
 // 处理视频播放
 function handlePlay() {
   isPlaying = true;
+  videoPlayer.play();
   updateTime()
 }
 
 // 处理视频暂停
 function handlePause() {
+  videoPlayer.pause();
   isPlaying = false;
-  console.log("1111111")
 }
 
 // 更新时间
@@ -1041,6 +1186,7 @@ function startTimer() {
   }
   updateTime();
   videoPlayer.focus();
+  addTimerEvent(currentQuarter, currentQuarterStartTime)
 }
 
 function onInputFileChange() {

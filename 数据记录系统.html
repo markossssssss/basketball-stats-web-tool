@@ -11,7 +11,7 @@
 <body>
     
 <div class="video-select">
-  <input type="file" id="videoFileInput" accept="video/*" onchange="onInputFileChange()">
+  <input type="file" id="videoFileInput" accept="*" onchange="onInputFileChange()">
   <button onclick="playSelectedVideo()">播放视频</button>
 </div>
 
@@ -76,6 +76,9 @@
     <button id="infoButton6" class="centered-button" onclick="centeredButtonClicked(this.id)">违体犯规进攻</button>
     <button id="infoButton7" class="centered-button" onclick="centeredButtonClicked(this.id)">违体犯规防守</button>
   </div>
+  <div class="highlight-button-container">
+    <button id="highlightButton1" class="centered-button" onclick="centeredButtonClicked(this.id)">差进球</button>
+  </div>
 </div>
 
 <div class="quarter-selection">
@@ -97,7 +100,7 @@
         <table id="teamATable">
           <tr>
             <th>姓名</th>
-            <th>号码</th>
+            <th>位置</th>
             <th>是否在场</th>
             <th>操作</th>
           </tr>
@@ -111,7 +114,7 @@
         <table id="teamBTable">
           <tr>
             <th>姓名</th>
-            <th>号码</th>
+            <th>位置</th>
             <th>是否在场</th>
             <th>操作</th>
           </tr>
@@ -183,7 +186,7 @@
   </div>
 
   <div class="save-section">
-    <button onclick="exportToCSV()">Export to CSV</button>
+    <button onclick="exportToCSV()">保存</button>
   </div>
 
   <table id="eventTable">
