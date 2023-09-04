@@ -43,7 +43,7 @@ args = parser.parse_args()
 config = json.load(open(args.config_file))
 quarter_time = config["quarter_time"]
 scores = config["scores"]
-actual_quarter_time = 21
+actual_quarter_time = 24
 quarters = config["quarters"]
 event_data = pd.read_csv(args.event_data,)
 event_data = event_data.fillna("")
@@ -96,6 +96,8 @@ def stats():
         for stat_item in config["stats"]:
             if stat_item in high_level_stats:
                 continue
+            # if name == "22#贝赟" or name == "10#Wenliang Shen":
+            #     continue
             value = eval("get_{}('{}', {})".format(stat_item, name, 0))
             row[terms[stat_item]] = value
         global player_stats_A
@@ -144,8 +146,9 @@ def get_time(name, team_id):
     get_on_arr = sorted(list(event_data[(event_data.Team == team_name) & (event_data.Object == name) & (event_data.Event == "换人")]["Time"]))
     get_off_arr = sorted(list(event_data[(event_data.Team == team_name) & (event_data.Player == name) & (event_data.Event == "换人")]["Time"]))
 
-    # print(name)
-    # print(len(get_on_arr), len(get_off_arr))
+
+    print(name)
+    print(len(get_on_arr), len(get_off_arr))
     assert (len(get_on_arr) == len(get_off_arr)) or (len(get_on_arr) == len(get_off_arr) + 1)
 
 
@@ -468,20 +471,18 @@ def plot_table(stats, fig, ax, team_name=""):
           textprops={"fontsize": 15, "ha": "center"}, )
     return tab
 
-plt.rcParams["text.color"] = "#e0e8df"
-plt.rcParams['font.sans-serif'] = ['MFGeHeiNoncommercial']
 
+# plt.rcParams["text.color"] = "#e0e8df"
 
 # fig = plt.figure(num=1, figsize=(20, 10),dpi=80)
-#
+
 # ax1 = fig.add_subplot(2,1,1)
 # ax2 = fig.add_subplot(2,1,2)
-#
+
 # table1 = plot_table(player_stats_A, fig, ax1, team_names[0])
 # table2 = plot_table(player_stats_B, fig, ax2, team_names[1])
-#
-#
-# plt.rcParams['font.sans-serif'] = ['MFGeHeiNoncommercial']
+
+
 # plt.title(label="{} {} {}\n___________________________________________________________________________________________________".format(team_names[0], scores, team_names[1]),
 #           fontsize=25,
 #           fontweight="bold",
@@ -491,17 +492,15 @@ plt.rcParams['font.sans-serif'] = ['MFGeHeiNoncommercial']
 # plt.suptitle("8月8日 ABL篮球馆 {} JUSHOOP".format(61 * "   "), fontsize=19, color='#e0e8df', x=0.5, y=0.94, fontweight="bold")
 # # logo = Image.open('logo1.png')
 # # plt.imshow(logo)
-# for font in matplotlib.font_manager.fontManager.ttflist:
-#     print(font.name, '-', font.fname)
+# # for font in matplotlib.font_manager.fontManager.ttflist:
+# #     print(font.name, '-', font.fname)
 # matplotlib.pyplot.subplots_adjust(left=0.02, bottom=0.001, right=0.982, top=0.893)
-
 
 # plt.show()
 
 fig, ax = plt.subplots(figsize=(20, 10),dpi=80)
 table = plot_table(player_stats_A, fig, ax, team_names[0])
 # table = plot_table(player_stats_B, fig, ax, team_names[1])
-plt.rcParams['font.sans-serif'] = ['MFGeHeiNoncommercial']
 plt.title(label="{} {} {}\n___________________________________________________________________________________________________".format(team_names[0], scores, team_names[1]),
           fontsize=25,
           fontweight="bold",

@@ -1,6 +1,5 @@
-let editedPlayer = null;
-let teamAName = "Team A";
-let teamBName = "Team B";
+// 配置
+
 const eventTypes = {
   "3分球出手": ["不进", "进球", "球进加罚"],
   "2分球出手": ["不进", "进球", "球进加罚"],
@@ -14,58 +13,7 @@ const eventTypes = {
   "换人": []
 };
 const eventTypeNames = ["2分球出手", "3分球出手", "罚球出手", "助攻", "抢断", "犯规", "失误", "换人", "盖帽", "篮板"];
-const eventTypesWithTarget = ["犯规", "助攻", "抢断", "盖帽", "换人"];
-
-// 获取视频文件输入框和视频播放器
-const videoFileInput = document.getElementById("videoFileInput");
-const videoPlayer = document.getElementById("videoPlayer");
-const quarterButtons = document.querySelectorAll(".quarter-selection button");
-quarterButtons[1].classList.add("active");
-const quarterTimer = document.getElementById("quarterTimer");
-const eventButtons = document.querySelectorAll('.button-container button');
-const leftButtons = document.querySelectorAll('.left-button-container button');
-const rightButtons = document.querySelectorAll('.right-button-container button');
-const centeredButtons = document.querySelectorAll('.center-button-container button');
-const infoButtons = document.querySelectorAll('.info-button-container button');
-const highlightButtons = document.querySelectorAll('.highlight-button-container button');
-
-
-
-let rostersConfirmed = false;
-
-// 视频播放器状态
-let isPlaying = false;
-let timerActive = false;
-let startTime = 0;
-let currentQuarter = 1;
-let currentQuarterStartTime = 0;
-
-let switchPlayerCount = 0;
-let switchPlayerTeamName = "";
-let switchPlayerRow = 0;
-
-
-buttonsConcealedFlag = false;
-
-// 事件记录全局变量
-let playerButtonSelectedFlag = false;
-let eventButtonSelectedFlag = false;
-let objectButtonSelectedFlag = false;
-let infoButtonSelectedFlag = false;
-let benchPlayersButtonShowedFlag = false;
-
-let event_team = "";
-let event_player = "";
-let event_type = "";
-let event_time = "";
-let event_info = "";
-let event_object = "";
-
-let lastButtonId = "";
-
-let isFastForward = false;
-let isFastRewind = false;
-
+const eventTypesWithTarget = ["犯规", "助攻", "抢断", "盖帽", "换人", "计时开始"];
 
 const teamAPlayersTemplate = [
   { name: "13#队员1", position: "G" },
@@ -87,10 +35,74 @@ const teamBPlayersTemplate = [
   { name: "12#队员7", position: "F" }
 ];
 
-let teamAPlayersList = [...teamAPlayersTemplate]; // Create a copy of the original player list for Team A
-let teamBPlayersList = [...teamBPlayersTemplate]; // Create a copy of the original player list for Team B
+// 页面元素
+var overlay1 = document.getElementById("overlay1");
+var overlay2 = document.getElementById("overlay2");
+var overlay3 = document.getElementById("overlay3");
+const videoFileInput = document.getElementById("videoFileInput");
+const videoPlayer = document.getElementById("videoPlayer");
+const quarterButtons = document.querySelectorAll(".quarter-selection button");
+quarterButtons[1].classList.add("active");
+const quarterTimer = document.getElementById("quarterTimer");
+const eventButtons = document.querySelectorAll('.button-container button');
+const leftButtons = document.querySelectorAll('.left-button-container button');
+const rightButtons = document.querySelectorAll('.right-button-container button');
+const centeredButtons = document.querySelectorAll('.center-button-container button');
+const infoButtons = document.querySelectorAll('.info-button-container button');
+const highlightButtons = document.querySelectorAll('.highlight-button-container button');
+
+
+
+
+
+// 全局数据变量
+
+let teamAName = "Team A";
+let teamBName = "Team B";
+let gameID = "";
+let gameDate = "";
+let teamAPlayersList = [...teamAPlayersTemplate]; 
+let teamBPlayersList = [...teamBPlayersTemplate]; 
+let events = [];
+let currentQuarter = 1;
+let currentQuarterStartTime = 0;
+
+
+// 全局临时记录变量
+
+let editedPlayer = null;
+let rostersConfirmed = false;
+let isPlaying = false;
+let timerActive = false;
+
+let switchPlayerCount = 0;
+let switchPlayerTeamName = "";
+let switchPlayerRow = 0;
+
+
+buttonsConcealedFlag = false;
+
+let playerButtonSelectedFlag = false;
+let eventButtonSelectedFlag = false;
+let objectButtonSelectedFlag = false;
+let infoButtonSelectedFlag = false;
+
+let event_team = "";
+let event_player = "";
+let event_type = "";
+let event_time = "";
+let event_info = "";
+let event_object = "";
+
+let lastButtonId = "";
+
+let isFastForward = false;
+let isFastRewind = false;
+
+
 
 window.onload = function () {
+  openModal1();
   populatePlayersTable("teamATable", teamAPlayersList);
   populatePlayersTable("teamBTable", teamBPlayersList);
   populateEventTypes("event");
@@ -98,15 +110,6 @@ window.onload = function () {
   populateEventInfoDropdown();
   initCenteredButtons();
 
-  // 给球队名字输入框添加事件监听器
-  document.getElementById("teamNameInputA").addEventListener("input", function () {
-    updateTeamName(this.value, teamAName); // 更新球队名字
-  });
-
-  // 给球队名字输入框添加事件监听器
-  document.getElementById("teamNameInputB").addEventListener("input", function () {
-    updateTeamName(this.value, teamBName); // 更新球队名字
-  });
 
   // 更新 populatePlayersDropdown 函数的调用
   document.getElementById("team").addEventListener("change", function () {
@@ -114,17 +117,7 @@ window.onload = function () {
     populateObjectPlayersDropdown(this.value);
   });
 
-//   document.getElementById("playerName").addEventListener("keydown", function (event) {
-//     if (event.key === "Enter") {
-//       addPlayer();
-//     }
-//   });
 
-//   document.getElementById("playerPosition").addEventListener("keydown", function (event) {
-//     if (event.key === "Enter") {
-//       addPlayer();
-//     }
-//   });
   document.addEventListener("keyup", function(event) {
     if (event.keyCode === 39) {
       event.preventDefault();
@@ -283,6 +276,93 @@ window.onload = function () {
   videoPlayer.addEventListener("timeupdate", updateTime);
 
 };
+
+function saveDataToLocalStorage() {
+  // 将球员名单和事件列表转换为JSON字符串
+  const playerAListJSON = JSON.stringify(teamAPlayersList);
+  const playerBListJSON = JSON.stringify(teamBPlayersList);
+  const eventsListJSON = JSON.stringify(events);
+  
+  // 使用localStorage保存数据
+  localStorage.setItem(gameID, 1);
+  localStorage.setItem(`${gameID}_playersA`, playerAListJSON);
+  localStorage.setItem(`${gameID}_playersB`, playerBListJSON);
+  localStorage.setItem(`${gameID}_events`, eventsListJSON);
+  localStorage.setItem(`${gameID}_quarter`, currentQuarter);
+  localStorage.setItem(`${gameID}_quarterStart`, currentQuarterStartTime);
+}
+
+function loadDataFromLocalStorage() {
+  rostersConfirmed = true
+  const playerAListJSON = localStorage.getItem(`${gameID}_playersA`);
+  const playerBListJSON = localStorage.getItem(`${gameID}_playersB`);
+  const eventsListJSON = localStorage.getItem(`${gameID}_events`);
+  currentQuarter = localStorage.getItem(`${gameID}_quarter`);
+  currentQuarterStartTime = localStorage.getItem(`${gameID}_quarterStart`);
+  selectQuarter(currentQuarter)
+  if (playerAListJSON && playerBListJSON) {
+    teamAPlayersList = JSON.parse(playerAListJSON);
+    teamBPlayersList = JSON.parse(playerBListJSON);
+    populatePlayersTable("teamATable", teamAPlayersList)
+    populatePlayersTable("teamBTable", teamBPlayersList)
+    populatePlayersDropdown();
+    populateObjectPlayersDropdown(document.getElementById("team").value);
+    populateEventTeamDropdowns();
+    initCenteredButtons();
+  }
+  if (eventsListJSON) {
+    events = JSON.parse(eventsListJSON);
+    events.forEach(event => _addEvent(event[0], event[1], event[2], event[3], event[4], event[5], save=false));
+  }
+}
+
+function openModal1() {
+  overlay1.style.display = "flex"; // 显示遮罩层
+}
+
+function openModal2() {
+  overlay2.style.display = "flex"; // 显示遮罩层
+}
+
+function openModal3() {
+  overlay3.style.display = "flex"; // 显示遮罩层
+}
+
+function newGame() {
+  overlay2.style.display = "none";
+  overlay3.style.display = "none";
+  console.log("new game start")
+}
+
+function loadGame() {
+  overlay3.style.display = "none";
+  loadDataFromLocalStorage()
+  console.log("load game start")
+  
+}
+
+function gameInfo() {
+            // 获取输入的信息
+    var team1Name = document.getElementById("team1").value;
+    var team2Name = document.getElementById("team2").value;
+    var matchDate = document.getElementById("matchDate").value;
+    
+    gameDate = matchDate
+    gameID = `${team1Name}_${team2Name}_${matchDate}`
+    updateTeamNames(team1Name, team2Name)
+
+    // 隐藏模态框
+    overlay1.style.display = "none";
+    
+    if (localStorage.getItem(gameID) == null) {
+        openModal2();
+    }
+    else {
+        openModal3();
+    }
+
+    // 在这里可以执行你的进一步操作，比如更新页面内容等
+}
 
 function startFastForward() {
       if (videoPlayer) {
@@ -476,7 +556,6 @@ function initCenteredButtons() {
   eventButtonSelectedFlag = false;
   objectButtonSelectedFlag = false;
   infoButtonSelectedFlag = false;
-  benchPlayersButtonShowedFlag = false;
   event_team = "";
   event_player = "";
   event_time = "";
@@ -677,9 +756,19 @@ function populatePlayersDropdown(oncourt=2) {
   }
 }
 
+function updateTeamNames(teamA, teamB) {
+  teamAName = teamA;
+  teamBName = teamB;
+  populatePlayersTable("teamATable", teamAPlayersList)
+  populatePlayersTable("teamBTable", teamBPlayersList)
+  populatePlayersDropdown();
+  populateObjectPlayersDropdown(document.getElementById("team").value);
+  populateEventTeamDropdowns();
+  document.getElementById('teamAName').textContent = teamA;
+  document.getElementById('teamBName').textContent = teamB;
+}
+
 function updateTeamName(newTeamName, team) {
-  console.log("137-----", teamAName, teamBName)
-  console.log(newTeamName, team)
 
   if (team === teamAName) {
     teamAName = newTeamName;
@@ -886,6 +975,31 @@ function populateObjectPlayersDropdown(selectedTeam) {
   }
 }
 
+function deleteEvent(deleteButton) {
+  const row = deleteButton.parentNode.parentNode;
+  const table = document.getElementById("eventTable");
+  events.splice(row.rowIndex-1,1)
+  console.log(events)
+  table.deleteRow(row.rowIndex);
+}
+
+function confirmStartingLineup() {
+  rostersConfirmed = true;
+  const startTime = "1 - 0 : 00";
+  const teamAStartingPlayers = teamAPlayersList.slice(0, 5);
+  const teamBStartingPlayers = teamBPlayersList.slice(0, 5);
+
+  // 添加 Team A 首发出场事件
+  teamAStartingPlayers.forEach(player => {
+    _addEvent(teamAName, "", startTime, "换人", "", player.name);
+  });
+
+  // 添加 Team B 首发出场事件
+  teamBStartingPlayers.forEach(player => {
+    _addEvent(teamBName, "", startTime, "换人", "", player.name);
+  });
+}
+
 function addSwitchEvent(team, player1, player2) {
   const eventType = document.getElementById("event").value;
   const eventInfo = document.getElementById("eventInfo").value;
@@ -894,22 +1008,8 @@ function addSwitchEvent(team, player1, player2) {
   const seconds = document.getElementById("seconds").value;
 
   const formattedTime = `${quarter} - ${minutes} : ${seconds}`;
+  _addEvent(team, player1, formattedTime, "换人", "", player2);
 
-  const table = document.getElementById("eventTable");
-  const row = table.insertRow();
-  row.insertCell().innerText = team;
-  row.insertCell().innerText = player1;
-  row.insertCell().innerText = formattedTime;
-  row.insertCell().innerText = "换人";
-  row.insertCell().innerText = "";
-  row.insertCell().innerText = player2;
-  const deleteButton = document.createElement("button");
-  deleteButton.innerText = "Delete";
-  deleteButton.addEventListener("click", function () {
-    deleteEvent(this);
-  });
-
-  row.insertCell().appendChild(deleteButton);
 }
 
 function addEvent() {
@@ -924,102 +1024,24 @@ function addEvent() {
 
   const formattedTime = `${quarter} - ${minutes} : ${seconds}`;
 
-  const table = document.getElementById("eventTable");
-  const row = table.insertRow();
-  row.insertCell().innerText = team;
-  row.insertCell().innerText = player;
-  row.insertCell().innerText = formattedTime;
-  row.insertCell().innerText = eventType;
-  row.insertCell().innerText = eventInfo;
-  row.insertCell().innerText = eventTypesWithTarget.includes(eventType) ? objectPlayer : "";
-  const deleteButton = document.createElement("button");
-  deleteButton.innerText = "Delete";
-  deleteButton.addEventListener("click", function () {
-    deleteEvent(this);
-  });
-
-  row.insertCell().appendChild(deleteButton);
+  _addEvent(team, player, formattedTime, eventType, eventInfo, objectPlayer);
 }
 
-function deleteEvent(deleteButton) {
-  const row = deleteButton.parentNode.parentNode;
-  const table = document.getElementById("eventTable");
-  table.deleteRow(row.rowIndex);
-}
-
-function confirmStartingLineup() {
-  rostersConfirmed = true;
-  const startTime = "1 - 0 : 00";
-  const teamAStartingPlayers = teamAPlayersList.slice(0, 5);
-  const teamBStartingPlayers = teamBPlayersList.slice(0, 5);
-
-  const table = document.getElementById("eventTable");
-
-  // 添加 Team A 首发出场事件
-  teamAStartingPlayers.forEach(player => {
-    _addEvent(table, teamAName, "", startTime, "换人", "", player.name);
-  });
-
-  // 添加 Team B 首发出场事件
-  teamBStartingPlayers.forEach(player => {
-    _addEvent(table, teamBName, "", startTime, "换人", "", player.name);
-  });
-}
-
-function _addEvent(table, teamName, playerName, startTime, eventType, eventInfo, objectPlayer) {
-
+function _addEvent(teamName, playerName, startTime, eventType, eventInfo, objectPlayer, save=true) {
+    const table = document.getElementById("eventTable");
     const row = table.insertRow();
+    objectPlayer = eventTypesWithTarget.includes(eventType) ? objectPlayer : "";
     row.insertCell().innerText = teamName;
     row.insertCell().innerText = playerName;
     row.insertCell().innerText = startTime;
     row.insertCell().innerText = eventType;
     row.insertCell().innerText = eventInfo;
-    row.insertCell().innerText = eventTypesWithTarget.includes(eventType) ? objectPlayer : "";
-    const deleteButton = document.createElement("button");
-    deleteButton.innerText = "Delete";
-    deleteButton.addEventListener("click", function () {
-    deleteEvent(this);
-  });
-
-  row.insertCell().appendChild(deleteButton);
-}
-
-function addHighlight(info) {
-    const table = document.getElementById("eventTable");
-    const quarter = document.getElementById("quarter").value;
-    const minutes = document.getElementById("minutes").value;
-    const seconds = document.getElementById("seconds").value;
-    const row = table.insertRow();
-    const formattedTime = `${quarter} - ${minutes} : ${seconds}`;
+    row.insertCell().innerText = objectPlayer;
     
-    row.insertCell().innerText = "";
-    row.insertCell().innerText = "";
-    row.insertCell().innerText = formattedTime;
-    row.insertCell().innerText = "highlight";
-    row.insertCell().innerText = info;
-    row.insertCell().innerText = "";
-    const deleteButton = document.createElement("button");
-    deleteButton.innerText = "Delete";
-    deleteButton.addEventListener("click", function () {
-    deleteEvent(this);
-  });
-
-  row.insertCell().appendChild(deleteButton);
-}
-
-function addTimerEvent(quarter, quarterStartTime) {
-    const table = document.getElementById("eventTable");
+    events.push([teamName, playerName, startTime, eventType, eventInfo, objectPlayer])
+    if (save) {saveDataToLocalStorage();}
+    console.log(events)
     
-    const startTime = Math.floor(quarterStartTime)
-    const row = table.insertRow();
-    const formattedTime = `1 - 0 : 0`;
-    
-    row.insertCell().innerText = "";
-    row.insertCell().innerText = "";
-    row.insertCell().innerText = formattedTime;
-    row.insertCell().innerText = "计时开始";
-    row.insertCell().innerText = startTime;
-    row.insertCell().innerText = quarter;
     const deleteButton = document.createElement("button");
     deleteButton.innerText = "Delete";
     deleteButton.addEventListener("click", function () {
@@ -1030,27 +1052,30 @@ function addTimerEvent(quarter, quarterStartTime) {
 }
 
 function addEventFromGlobal() {
-    const table = document.getElementById("eventTable");
+  const quarter = document.getElementById("quarter").value;
+  const minutes = document.getElementById("minutes").value;
+  const seconds = document.getElementById("seconds").value;
+  const formattedTime = `${quarter} - ${minutes} : ${seconds}`;
+    
+  _addEvent(event_team, event_player, formattedTime, event_type, event_info, event_object);
+}
+
+
+function addTimerEvent(quarter, quarterStartTime) {
+  const startTime = Math.floor(quarterStartTime)
+  const formattedTime = `1 - 0 : 0`;
+  
+  _addEvent("", "", formattedTime, "计时开始", startTime, quarter);
+}
+
+function addHighlight(info) {
     const quarter = document.getElementById("quarter").value;
     const minutes = document.getElementById("minutes").value;
     const seconds = document.getElementById("seconds").value;
-    const row = table.insertRow();
     const formattedTime = `${quarter} - ${minutes} : ${seconds}`;
-    
-    row.insertCell().innerText = event_team;
-    row.insertCell().innerText = event_player;
-    row.insertCell().innerText = formattedTime;
-    row.insertCell().innerText = event_type;
-    row.insertCell().innerText = event_info;
-    row.insertCell().innerText = eventTypesWithTarget.includes(event_type) ? event_object : "";
-    const deleteButton = document.createElement("button");
-    deleteButton.innerText = "Delete";
-    deleteButton.addEventListener("click", function () {
-    deleteEvent(this);
-  });
-
-  row.insertCell().appendChild(deleteButton);
+    _addEvent("", "", formattedTime, "highlight", info, "");
 }
+
 
 function populateEventTeamDropdowns() {
   const eventTeamDropdowns = document.querySelectorAll(".event-team-dropdown");
@@ -1124,8 +1149,8 @@ function playSelectedVideo() {
     if (file.type.startsWith("video/")) {
       const objectURL = URL.createObjectURL(file);
       videoPlayer.src = objectURL;
-      videoPlayer.currentTime = startTime;
-      currentQuarterStartTime = startTime;
+      videoPlayer.currentTime = 0;
+      currentQuarterStartTime = 0;
     //   updateQuarterTimer();
       videoPlayer.play();
     } else {
@@ -1181,9 +1206,6 @@ function selectQuarter(quarter) {
 function startTimer() {
   currentQuarterStartTime = videoPlayer.currentTime
   timerActive = true
-  if (currentQuarter === 1) {
-      startTime = videoPlayer.currentTime
-  }
   updateTime();
   videoPlayer.focus();
   addTimerEvent(currentQuarter, currentQuarterStartTime)
