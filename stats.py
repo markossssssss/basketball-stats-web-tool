@@ -13,6 +13,7 @@ event_data = pd.read_csv(os.path.join(args.data_dir, "events.csv"),)
 event_data = event_data.fillna("")
 
 events = BasketballEvents(event_data, config)
+events.check_switch_people()
 events.get_stats()
 events.plot_stats_both_team(show=False, save=args.data_dir)
 events.plot_stats_single_team(0, show=False, save=args.data_dir)
