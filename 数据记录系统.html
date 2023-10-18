@@ -10,6 +10,36 @@
 
 <body>
     
+<div class="overlay" id="overlay1">
+        <div class="modal">
+            <h2>输入比赛信息</h2>
+            <label for="team1">队伍1：</label>
+            <input type="text" id="team1" required><br><br>
+            <label for="team2">队伍2：</label>
+            <input type="text" id="team2" required><br><br>
+            <label for="matchDate">比赛日期：</label>
+            <input type="date" id="matchDate" required><br><br>
+            <button onclick="gameInfo()">确认</button>
+        </div>
+</div>
+
+<div class="overlay" id="overlay2">
+        <div class="modal">
+            <h2>未发现比赛数据</h2>
+            <label for="matchDate">即将为该场比赛新建数据</label>
+            <button onclick="newGame()">确认</button>
+        </div>
+</div>
+
+<div class="overlay" id="overlay3">
+        <div class="modal">
+            <h2>比赛数据已存在</h2>
+            <label for="matchDate">是否导入过去数据</label>
+            <button onclick="loadGame()">导入</button>
+            <button onclick="newGame()">新建</button>
+        </div>
+</div>
+    
 <div class="video-select">
   <input type="file" id="videoFileInput" accept="*" onchange="onInputFileChange()">
   <button onclick="playSelectedVideo()">播放视频</button>
@@ -95,7 +125,7 @@
     <div class="team-container">
       <div class="team-section">
         <h1>
-          <input type="text" id="teamNameInputA" value="Team A" />
+          <label id="teamAName" for="teamAName">Team A</label><br>
         </h1>
         <table id="teamATable">
           <tr>
@@ -109,7 +139,7 @@
 
       <div class="team-section">
         <h1>
-          <input type="text" id="teamNameInputB" value="Team B" />
+          <label id="teamBName" for="teamBName">Team B</label><br>
         </h1>
         <table id="teamBTable">
           <tr>
