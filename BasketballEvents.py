@@ -7,6 +7,7 @@ import json
 import pandas as pd
 from matplotlib.colors import LinearSegmentedColormap
 from plottable.cmap import normed_cmap
+from plottable.formatters import decimal_to_percent
 from PIL import Image
 import matplotlib.font_manager as font_manager
 from datetime import datetime
@@ -29,11 +30,15 @@ terms = {
     "make_fouls": "造成犯规",
     "EFF": "效率值",
     "oncourt_per_scores": "在场得分(10回合)",
-    "oncourt_per_loses": "在场失分(10回合)"
+    "oncourt_per_loses": "在场失分(10回合)",
+    "TS": "真实命中率",
+    "USG": "球权使用率",
+    "atps": "出手",
+    "ft_atps": "罚球出手"
 }
 
 # 需要等所有基础数据都出来之后才能计算的数据
-high_level_stats = ["EFF"]
+high_level_stats = ["EFF", "USG"]
 
 def append(df, row_dict):
     return pd.concat([df, pd.DataFrame([row_dict])], ignore_index=True)
@@ -54,6 +59,51 @@ class BasketballEvents():
         self.preprocess()
         self.player_stats = None
         self.scores = None
+        
+    def check_switch_people(self):
+        oncourt_players = {}
+        oncourt_players[self.team_names[0]] = []
+        oncourt_players[self.team_names[1]] = []
+        
+        print(oncourt_players)
+
+        for i,r in self.event_data.iterrows():
+            print(r)
+            if r["Team"] == "":
+                continue
+            if r["Event"] == "换人":
+                if r["Object"] in oncourt_players[r["Team"]]:
+                    print("要换上的人已经在场上")
+                    print(oncourt_players)
+                    print(r)
+                    raise ValueError
+                if r["Player"] == "":
+                    oncourt_players[r["Team"]].append(r["Object"])
+                else:
+                    try:
+                        oncourt_players[r["Team"]].remove(r["Player"])
+                        oncourt_players[r["Team"]].append(r["Object"])
+                    except Exception as e:
+                        print(e)
+                        print("要换下的人不在场上")
+                        print(oncourt_players)
+                        print(r)
+
+            else:
+                if r["Player"] not in oncourt_players[r["Team"]]:
+                    print("数据对象不在场上")
+                    print("第{}节，{}".format(r["Quarter"], r["OriginTime"]))
+                    print(oncourt_players)
+                    print(r)
+                    raise ValueError
+                if r["Object"] != "":
+                    if (r["Object"] not in oncourt_players[self.team_names[0]]) and (r["Object"] not in oncourt_players[self.team_names[1]]):
+                        print("数据对象不在场上")
+                        print(oncourt_players)
+                        print(r)
+                        raise ValueError
+
+        
     
     def preprocess(self):
         # get team names
@@ -86,11 +136,13 @@ class BasketballEvents():
         for i,r in self.event_data[self.event_data.Event=="计时开始"].iterrows():
             # print(r)
             self.quarter_start_times[int(r["Object"])-1] = int(r["Info"])
-    
+
         # parse time
+        self.event_data["OriginTime"] = self.event_data["Time"]
         self.event_data["OriginQuarterTime"] = self.event_data["Time"].apply(self.parse_origin_quarter_time)
         self.event_data["Quarter"] = self.event_data["Time"].apply(self.parse_quarter)
         self.event_data["Time"] = self.event_data["Time"].apply(self.parse_time)
+        self.event_data.sort_values(by=['Time'],ascending=[True])
         
     
     def get_stats(self):
@@ -113,6 +165,7 @@ class BasketballEvents():
         self.player_stats[1].set_index('姓名', inplace = True)
         scores = self.get_total_scores()
         self.scores = "{}:{}".format(scores[0], scores[1])
+        self.scores_rev = "{}:{}".format(scores[1], scores[0])
             
     def get_total_scores(self):
         return sum(list(self.player_stats[0]["得分"])), sum(list(self.player_stats[1]["得分"]))
@@ -123,14 +176,19 @@ class BasketballEvents():
             self.get_stats()
         fig, ax = plt.subplots(figsize=(20, 10),dpi=80)
         
-        table = self.plot_table(fig, ax, team_idx)
+        table = self.plot_table(fig, ax, team_idx, plot_team_name=False)
+        
+        game_scores_txt = "{} {} {}".format(self.team_names[0], self.scores, self.team_names[1])
+        team_names_txt = "{} {}".format(self.team_names[0], self.team_names[1])
+        info_txt = "{} {}".format(self.match_date, self.court_name)
+        JUSHOOP_title_txt = "JUSHOOP 全场球局"
 
-        plt.title(label="{} {} {}\n___________________________________________________________________________________________________".format(self.team_names[0], self.scores, self.team_names[1]),
+        plt.title(label="{}\n{}".format(JUSHOOP_title_txt, "_"*110),
                   fontsize=25,
                   fontweight="bold",
                   color="#e0e8df",
                   y=1)
-        plt.suptitle("JUSHOOP {} {} {}".format(61 * "   ", self.match_date, self.court_name), fontsize=19, color='#e0e8df', x=0.5, y=0.94, fontweight="bold")
+        plt.suptitle("{} {} {}".format(self.team_names[team_idx], 65 * "   ", info_txt), fontsize=19, color='#e0e8df', x=0.5, y=0.94, fontweight="bold")
 
         matplotlib.pyplot.subplots_adjust(left=0.02, bottom=0.001, right=0.982, top=0.893)
         
@@ -155,13 +213,13 @@ class BasketballEvents():
         JUSHOOP_title_txt = "JUSHOOP球局"
         
         
-        plt.title(label="{} \n___________________________________________________________________________________________________".format(JUSHOOP_title_txt),
+        plt.title(label="{} \n____________________________________________________________________________________________________________".format(JUSHOOP_title_txt),
                   fontsize=25,
                   fontweight="bold",
                   color="#e0e8df",
                   y=2.22)
         # plt.rcParams["text.color"] = "#000000"
-        plt.suptitle("{} {} {}".format(game_scores_txt, 61 * "   ", info_txt), fontsize=19, color='#e0e8df', x=0.5, y=0.94, fontweight="bold")
+        plt.suptitle("{} {} {}".format(game_scores_txt, (68-int(len(game_scores_txt) / 2)) * "   ", info_txt), fontsize=19, color='#e0e8df', x=0.5, y=0.94, fontweight="bold")
         # logo = Image.open('logo1.png')
         # plt.imshow(logo)
         # for font in matplotlib.font_manager.fontManager.ttflist:
@@ -217,8 +275,43 @@ class BasketballEvents():
         scores += len(get_assist_df[get_assist_df.Info == "3分"]) * 3 + len(get_assist_df[get_assist_df.Info == "2分"]) * 2
     
         return scores
-    
-    
+
+    def get_TS(self, name, team_id):
+        team_name = self.team_names[team_id]
+        team_name_op = self.team_names[1 - team_id]
+        scores = 0
+        # 独立进球记录
+        scores_df = self.event_data[
+            (self.event_data.Team == team_name) & (self.event_data.Player == name) & (self.event_data.Info == "进球")]
+        # 受助攻记录
+        get_assist_df = self.event_data[
+            (self.event_data.Team == team_name) & (self.event_data.Object == name) & (self.event_data.Event == "助攻")]
+        scores += len(scores_df[scores_df.Event == "3分球出手"]) * 3 + len(scores_df[scores_df.Event == "2分球出手"]) * 2 + len(
+            scores_df[scores_df.Event == "罚球出手"])
+        scores += len(get_assist_df[get_assist_df.Info == "3分"]) * 3 + len(
+            get_assist_df[get_assist_df.Info == "2分"]) * 2
+
+        twopts_atpt_df = self.event_data[
+            (self.event_data.Team == team_name) & (self.event_data.Player == name) & (self.event_data.Event == "2分球出手")]
+        threepts_atpt_df = self.event_data[
+            (self.event_data.Team == team_name) & (self.event_data.Player == name) & (self.event_data.Event == "3分球出手")]
+        fts_atpt_df = self.event_data[
+            (self.event_data.Team == team_name) & (self.event_data.Player == name) & (self.event_data.Event == "罚球出手")]
+        assisted_df = self.event_data[
+            (self.event_data.Team == team_name) & (self.event_data.Object == name) & (self.event_data.Event == "助攻")]
+        blocked_df = self.event_data[
+            (self.event_data.Team == team_name_op) & (self.event_data.Object == name) & (
+                    self.event_data.Event == "盖帽")]
+
+        atpt = len(twopts_atpt_df) + len(threepts_atpt_df) + len(assisted_df) + len(blocked_df)
+        ft_atpt = len(fts_atpt_df)
+
+        if scores == 0:
+            return 0
+
+        return round(scores / ( 2 * ( atpt + 0.44 * ft_atpt)), 3)
+
+
     def get_rebounds(self, name, team_id):
         team_name = self.team_names[team_id]
         rebounds_df = self.event_data[(self.event_data.Team == team_name) & (self.event_data.Player == name) & (self.event_data.Event == "篮板")]
@@ -266,6 +359,28 @@ class BasketballEvents():
         team_name = self.team_names[team_id]
         blocks_df = self.event_data[(self.event_data.Team == team_name) & (self.event_data.Player == name) & (self.event_data.Event == "盖帽")]
         return len(blocks_df)
+
+    def get_atps(self, name, team_id):
+        team_name = self.team_names[team_id]
+        team_name_op = self.team_names[1 - team_id]
+        twopts_atpt_df = self.event_data[
+            (self.event_data.Team == team_name) & (self.event_data.Player == name) & (self.event_data.Event == "2分球出手")]
+        threepts_atpt_df = self.event_data[
+            (self.event_data.Team == team_name) & (self.event_data.Player == name) & (self.event_data.Event == "3分球出手")]
+        assisted_df = self.event_data[
+            (self.event_data.Team == team_name) & (self.event_data.Object == name) & (self.event_data.Event == "助攻")]
+        blocked_df = self.event_data[
+            (self.event_data.Team == team_name_op) & (self.event_data.Object == name) & (
+                    self.event_data.Event == "盖帽")]
+
+        return len(twopts_atpt_df) + len(threepts_atpt_df) + len(assisted_df) + len(blocked_df)
+
+    def get_ft_atps(self, name, team_id):
+        team_name = self.team_names[team_id]
+        fts_atpt_df = self.event_data[
+            (self.event_data.Team == team_name) & (self.event_data.Player == name) & (self.event_data.Event == "罚球出手")]
+
+        return len(fts_atpt_df)
     
     
     def get_2PTs(self, name, team_id):
@@ -330,7 +445,45 @@ class BasketballEvents():
                 EFF += (int(r["得分"]) + int(r["篮板"]) + int(r["助攻"]) + int(r["抢断"]) + int(r["盖帽"] - int(r["失误"])))
                 EFF -= (parse_shoots(r["2分"]) + parse_shoots(r["3分"]) + parse_shoots(r["罚球"]))
                 self.player_stats[idx].loc[i, "效率值"] = EFF
-            
+
+    def get_USG(self):
+        for idx, team in enumerate(self.team_names):
+            tos_total = 0
+            atps_total = 0
+            ft_atps_total = 0
+
+            for i, r in self.player_stats[idx].iterrows():
+                tos_total += r["失误"]
+                atps_total += r["出手"]
+                ft_atps_total += r["罚球出手"]
+
+            for i,r in self.player_stats[idx].iterrows():
+                USG = 0
+                USG += (r["出手"] + 0.44 * r["罚球出手"] + r["失误"]) * 48 * 60
+                time = int(r["上场时间"][:2]) * 60 + int(r["上场时间"][-2:])
+                USG /= (atps_total + 0.44 * ft_atps_total + tos_total) * time
+
+                self.player_stats[idx].loc[i, "球权使用率"] = round(USG, 3)
+
+    def get_RG(self):
+        for idx, team in enumerate(self.team_names):
+            tos_total = 0
+            atps_total = 0
+            ft_atps_total = 0
+
+            for i, r in self.player_stats[idx].iterrows():
+                tos_total += r["失误"]
+                atps_total += r["出手"]
+                ft_atps_total += r["罚球出手"]
+
+            for i, r in self.player_stats[idx].iterrows():
+                USG = 0
+                USG += (r["出手"] + 0.44 * r["罚球出手"] + r["失误"]) * 48 * 60
+                time = int(r["上场时间"][:2]) * 60 + int(r["上场时间"][-2:])
+                USG /= (atps_total + 0.44 * ft_atps_total + tos_total) * time
+
+                self.player_stats[idx].loc[i, "球权使用率"] = round(USG, 3)
+
     def get_oncourt_per_scores(self, name, team_id):
         team_name = self.team_names[team_id]
         team_name_op = self.team_names[1 - team_id]
@@ -476,7 +629,7 @@ class BasketballEvents():
         return round(op_team_scores / rounds * 10, 1)
         
     
-    def plot_table(self, fig, ax, team_idx):
+    def plot_table(self, fig, ax, team_idx, plot_team_name=True):
         plt.rcParams['font.family'] = ['Arial Unicode MS']  # 用黑体显示中文
     
         row_colors = {
@@ -504,10 +657,10 @@ class BasketballEvents():
         )
     
         table_cols = ["上场时间", "得分", "篮板", "助攻", "抢断", "盖帽", "2分", "3分", "罚球",
-                      "后场+前场篮板", "犯规", "失误", "造成犯规", "效率值", "在场得分(10回合)", "在场失分(10回合)"]
-    
+                      "后场+前场篮板", "失误", "球权使用率", "真实命中率", "效率值", "在场得分(10回合)", "在场失分(10回合)"]
+        team_title = self.team_names[team_idx] if plot_team_name else ""
         table_col_defs = [
-            ColDef("姓名", width=1.3, textprops={"ha": "left", "weight": "bold"}, title=self.team_names[team_idx]),
+            ColDef("姓名", width=1.3, textprops={"ha": "left", "weight": "bold"}, title=team_title),
             ColDef("上场时间", width=0.8),
             ColDef("得分", width=0.5),
             ColDef("助攻", width=0.5),
@@ -518,14 +671,14 @@ class BasketballEvents():
             ColDef("3分", width=0.5),
             ColDef("罚球", width=0.5),
             ColDef("后场+前场篮板", width=0.8, title="后场+\n前场篮板"),
-            ColDef("被犯规", width=0.8),
-            ColDef("犯规", width=0.5),
             ColDef("失误", width=0.5),
-            ColDef("效率值", width=0.5, text_cmap=normed_cmap(self.player_stats[team_idx]["效率值"], cmap=cmap, num_stds=2)),
+            ColDef("球权使用率", width=0.8, formatter=decimal_to_percent),
+            ColDef("真实命中率", width=0.8, formatter=decimal_to_percent),
+            ColDef("效率值", width=0.5, text_cmap=normed_cmap(self.player_stats[team_idx]["效率值"], cmap=cmap, num_stds=1.2)),
             ColDef("在场得分(10回合)", width=1.0, title="在场得分\n(10回合)",
-                   text_cmap=normed_cmap(self.player_stats[team_idx]["在场得分(10回合)"], cmap=cmap, num_stds=2)),
+                   text_cmap=normed_cmap(self.player_stats[team_idx]["在场得分(10回合)"], cmap=cmap, num_stds=1.8)),
             ColDef("在场失分(10回合)", width=1.0, title="在场失分\n(10回合)",
-                   text_cmap=normed_cmap(self.player_stats[team_idx]["在场失分(10回合)"], cmap=cmap_r, num_stds=2))
+                   text_cmap=normed_cmap(self.player_stats[team_idx]["在场失分(10回合)"], cmap=cmap_r, num_stds=1.8))
         ]
     
         tab = Table(self.player_stats[team_idx],
