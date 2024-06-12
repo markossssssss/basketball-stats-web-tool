@@ -1,0 +1,11 @@
+{
+    "match_type": "球局",
+    "match_name": "20240520_UWill球局",
+    "quarters": 9,
+    "quarter_time": 10,
+    "court": "UWill球馆",
+    "video_format": "mp4",
+    "stats_dir": "./",
+    "match_time": "20-22点",
+    "stats": ["atps", "scores", "assists", "rebounds", "steals", "blocks", "2PTs", "3PTs",  "OD_rebounds", "TOs", "TS", "EFF"]
+}

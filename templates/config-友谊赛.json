@@ -1,0 +1,12 @@
+{
+    "match_type": "友谊赛",
+    "match_name": "20240102_JUSHOOP_光耀",
+    "quarters": 10,
+    "quarter_time": 10,
+    "court": "虹桥汉森篮球馆",
+    "video_format": "mov",
+    "stats_dir": "./",
+    "match_time": "20-22点",
+
+    "stats": ["atps", "ft_atps", "time", "scores", "assists", "rebounds", "steals", "blocks", "2PTs", "3PTs", "FTs", "OD_rebounds", "fouls", "TOs", "make_fouls", "USG", "TS", "EFF", "oncourt_per_scores", "oncourt_per_loses"]
+}
