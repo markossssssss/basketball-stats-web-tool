@@ -11,7 +11,7 @@ class PickupRunStatsModel(BaseStatsModel):
 
     match_type = "球局"
     max_teams = 4
-    JUSHOOP_title_txt = "JUSHOOP全场友谊赛"
+    JUSHOOP_title_txt = "JUSHOOP FULLCOURT RUN"
     target_stats = ["atps", "scores", "assists", "rebounds", "steals", "blocks", "2PTs", "3PTs", "FTs", "OD_rebounds", "TOs", "TS", "EFF"]
 
     table_cols = ["得分", "篮板", "助攻", "抢断", "盖帽", "2分", "3分",

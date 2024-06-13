@@ -194,12 +194,12 @@ class BaseHighlightModelFast():
         return target_stats
 
 
-    def get_team_highlight(self, team, music_path=None):
+    def get_team_highlight(self, team_idx, music_path=None):
         if music_path is not None:
             if type(music_path) == list:
                 music_path = random.choice(music_path)
+        team = self.team_names[team_idx]
         target_path = os.path.join(self.game_dir, f"{team}{self.video_dir_postfix}", "highlight_{}.mp4".format(team))
-        team_idx = self.team_names.index(team)
         self.collections_whole_team[team_idx].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
         
         
@@ -668,7 +668,7 @@ def draw_text_with_border(draw, pos, text, font, fill, border_color='black', bor
         draw.text((x + dx, y + dy), text, font=font, fill=shadowcolor)
     draw.text(pos, text, font=font, fill=fill)
 
-def create_fixed_size_text_image(video_text, text_image_path, font_path, image_size=(500, 400)):
+def create_fixed_size_text_image(video_text, text_image_path, font_path, image_size=(500, 400), logo_path=None):
     img = Image.new('RGBA', image_size, (0, 0, 0, 255))  # 透明背景
     draw = ImageDraw.Draw(img)
     font, small_font, medium_font = get_font_size(image_size[0], font_path)
@@ -676,6 +676,12 @@ def create_fixed_size_text_image(video_text, text_image_path, font_path, image_s
     padding = image_size[0]//100
     y_pos = (image_size[1] - sum(get_size(font, line)[1] for line in video_text.main_text)) // 2
     last_height = 0
+
+    if logo_path is not None:
+        logo = Image.open(logo_path).convert("RGBA")  # 确保logo为RGBA模式
+        logo_width, logo_height = logo.size
+        logo_position = (padding, padding)  # 左上角位置
+        img.paste(logo, logo_position, logo)
 
     for line in video_text.main_text:
         line_width, line_height = get_size(font, line)
@@ -713,7 +719,7 @@ def get_video_cover(origin_video_info, logo_path, video_text, output_name, font_
 
     if text_img_path is None:
         text_img_path = "tmp.png"
-    create_fixed_size_text_image(video_text, text_img_path, font_path, image_size=(width, height))
+    create_fixed_size_text_image(video_text, text_img_path, font_path, image_size=(width, height), logo_path=logo_path)
     if logo_path is not None:
         logo_size = Image.open(logo_path).size
 

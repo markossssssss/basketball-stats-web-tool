@@ -161,11 +161,13 @@ if __name__ == "__main__":
 
 
     if not args.dewu:
-        get_stats(args)
-        if args.single_process:
-            highlight(args, target_stats, not args.no_cover)
-        else:
-            multi_process_highlight(args, target_stats, not args.no_cover)
+        if not args.highlight:
+            get_stats(args)
+        if not args.stats:
+            if args.single_process:
+                highlight(args, target_stats, not args.no_cover)
+            else:
+                multi_process_highlight(args, target_stats, not args.no_cover)
     else:
         if args.music_path is None:
             print("发布得物的视频需要指定音乐, 请用-music_path指定")
