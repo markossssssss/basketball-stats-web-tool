@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 class FriendshipMatchStatsModel(BaseStatsModel):
     match_type = "友谊赛"
     max_teams = 2
-    JUSHOOP_title_txt = "JUSHOOP FULLCOURT RUN"
+    JUSHOOP_title_txt = "JUSHOOP全场友谊赛"
 
     check_team = True
 
