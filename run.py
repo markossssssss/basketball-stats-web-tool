@@ -66,7 +66,7 @@ def get_stats(args):
     for i in range(stats_model.num_teams):
         stats_model.plot_stats_single_team(i, show=False, save=args.data_dir)
     if config["match_type"] == "友谊赛":
-        stats_model.plot_stats_all_teams(show=False, save=args.data_dir)
+        stats_model.plot_stats_both_team(show=False, save=args.data_dir)
 
 def dewu_post(video_dir, channels_set):
     dewu_model = DewuVideoUploader()
