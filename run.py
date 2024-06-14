@@ -63,10 +63,14 @@ def get_stats(args):
     event_data = event_data.fillna("")
     stats_model = auto_select_stats_model(event_data, config)
     stats_model.get_stats()
+    try:
+        title = config["title"]
+    except:
+        title = None
     for i in range(stats_model.num_teams):
-        stats_model.plot_stats_single_team(i, show=False, save=args.data_dir)
+        stats_model.plot_stats_single_team(i, show=False, save=args.data_dir, title=title)
     if config["match_type"] == "友谊赛":
-        stats_model.plot_stats_both_team(show=False, save=args.data_dir)
+        stats_model.plot_stats_both_team(show=False, save=args.data_dir, title=title)
 
 def dewu_post(video_dir, channels_set):
     dewu_model = DewuVideoUploader()

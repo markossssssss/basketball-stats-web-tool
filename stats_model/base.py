@@ -161,7 +161,7 @@ class BaseStatsModel():
         return sum(list(self.player_stats[0]["得分"])), sum(list(self.player_stats[1]["得分"]))
 
 
-    def plot_stats_single_team(self, team_idx, show=False, save=None):
+    def plot_stats_single_team(self, team_idx, show=False, save=None, title=None):
         if self.player_stats is None:
             self.get_stats()
         fig, ax = plt.subplots(figsize=(20, 10), dpi=80)
@@ -172,7 +172,9 @@ class BaseStatsModel():
         team_names_txt = "{} {}".format(self.team_names[0], self.team_names[1])
         info_txt = "{} {}".format(self.match_date, self.court_name)
 
-        plt.title(label="{}\n{}".format(self.JUSHOOP_title_txt, "_" * 110),
+        JUSHOOP_title_txt = self.JUSHOOP_title_txt if title is None else title
+
+        plt.title(label="{}\n{}".format(JUSHOOP_title_txt, "_" * 110),
                   fontsize=25,
                   fontweight="bold",
                   color="#e0e8df",
@@ -188,7 +190,7 @@ class BaseStatsModel():
             plt.savefig(os.path.join(save, "{}".format(self.team_names[team_idx])), dpi=300)
         plt.close()
 
-    def plot_stats_both_team(self, show=False, save=None):
+    def plot_stats_both_team(self, show=False, save=None, title=None):
         fig = plt.figure(num=1, figsize=(20, 10), dpi=80)
 
         ax1 = fig.add_subplot(2, 1, 1)
@@ -200,8 +202,9 @@ class BaseStatsModel():
         game_scores_txt = "{} {} {}".format(self.team_names[0], self.scores, self.team_names[1])
         info_txt = "{} {}".format(self.match_date, self.court_name)
 
+        JUSHOOP_title_txt = self.JUSHOOP_title_txt if title is None else title
         
-        plt.title(label="{} \n____________________________________________________________________________________________________________".format(self.JUSHOOP_title_txt),
+        plt.title(label="{} \n____________________________________________________________________________________________________________".format(JUSHOOP_title_txt),
                   fontsize=25,
                   fontweight="bold",
                   color="#e0e8df",

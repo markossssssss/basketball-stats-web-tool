@@ -9,7 +9,7 @@ import bisect
 import random
 
 
-HIGHLIGHT_PLAYTIME_DICT = {"进球": (6, 2), "盖帽": (3, 2), "助攻": (8, 2), "抢断": (2, 3), "3分": (3, 3), "4分": (4, 4), "2分": (3, 3),
+HIGHLIGHT_PLAYTIME_DICT = {"进球": (6, 2), "盖帽": (3, 2), "助攻": (7, 3), "抢断": (2, 3), "3分": (4, 4), "4分": (4, 4), "2分": (4, 4),
                            "篮板": (3, 3), "不进": (6, 3), "失误": (6, 3), "囧": (4, 4)}
 
 DATA_ON_COVER_BASELINE = {"得分": 4, "助攻": 2, "篮板": 3, "抢断": 1, "盖帽": 1, "真实命中率": 0.45, "效率值": 8}
@@ -680,6 +680,8 @@ def create_fixed_size_text_image(video_text, text_image_path, font_path, image_s
     if logo_path is not None:
         logo = Image.open(logo_path).convert("RGBA")  # 确保logo为RGBA模式
         logo_width, logo_height = logo.size
+        resize_rate = image_size[0] / logo_width
+        logo = logo.resize((int(logo_width * resize_rate), int(logo_height * resize_rate)))
         logo_position = (padding, padding)  # 左上角位置
         img.paste(logo, logo_position, logo)
 
