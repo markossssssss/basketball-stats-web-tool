@@ -42,10 +42,22 @@ class BaseHighlightModelFast():
         
         self.target_postfix = self.postfix
         
+        video_codec_list = []
+        fps_list = []
+        resolution_list = []
         for i in range(1, self.config["quarters"] + 1):
             tmp_clip = os.path.join(game_dir, f"{i}.{self.postfix}")
+            video_codec, video_tag, width, height, fps, time_base, audio_codec, sample_rate = get_video_info(tmp_clip)
+            video_codec_list.append(video_codec)
+            fps_list.append(fps)
+            resolution_list.append(f"{width}x{height}")
             self.videos.append(tmp_clip)
             self.quarter_video_lens.append(get_video_duration(tmp_clip))
+        self.check_video_info(self.videos, video_codec_list, "编码格式")
+        self.check_video_info(self.videos, fps_list, "帧率")
+        self.check_video_info(self.videos, resolution_list, "分辨率")
+
+        
         self.default_target_stats = ["scores", "assists", "blocks"]
 
         
@@ -75,6 +87,16 @@ class BaseHighlightModelFast():
         for i in range(self.num_teams):
             if not os.path.exists(os.path.join(self.game_dir, f"{self.team_names[i]}{self.video_dir_postfix}")):
                         os.mkdir(os.path.join(self.game_dir, f"{self.team_names[i]}{self.video_dir_postfix}"))
+
+
+    def check_video_info(self, video_names, info_list, info_name):
+
+        most_element = max(info_list, key=info_list.count)
+        print(f"本次视频的{info_name}是{most_element}")
+        for i, info in enumerate(info_list):
+            if info != most_element:
+                print(f"{video_names[i]}的{info_name}是{info_list[i]}信息不一致，请检查")
+                
 
 
     def init_team_highlight_data(self):
