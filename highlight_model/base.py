@@ -7,6 +7,8 @@ from PIL import ImageDraw, ImageFont, Image
 import subprocess
 import bisect
 import random
+from better_ffmpeg_progress import FfmpegProcess
+
 
 
 HIGHLIGHT_PLAYTIME_DICT = {"进球": (6, 2), "盖帽": (3, 2), "助攻": (7, 3), "抢断": (2, 3), "3分": (4, 4), "4分": (4, 4), "2分": (4, 4),
@@ -42,21 +44,12 @@ class BaseHighlightModelFast():
         
         self.target_postfix = self.postfix
         
-        video_codec_list = []
-        fps_list = []
-        resolution_list = []
         for i in range(1, self.config["quarters"] + 1):
             tmp_clip = os.path.join(game_dir, f"{i}.{self.postfix}")
-            video_codec, video_tag, width, height, fps, time_base, audio_codec, sample_rate = get_video_info(tmp_clip)
-            video_codec_list.append(video_codec)
-            fps_list.append(fps)
-            resolution_list.append(f"{width}x{height}")
             self.videos.append(tmp_clip)
             self.quarter_video_lens.append(get_video_duration(tmp_clip))
-        self.check_video_info(self.videos, video_codec_list, "编码格式")
-        self.check_video_info(self.videos, fps_list, "帧率")
-        self.check_video_info(self.videos, resolution_list, "分辨率")
 
+        check_video_info_and_reencode(self.videos)
         
         self.default_target_stats = ["scores", "assists", "blocks"]
 
@@ -87,16 +80,6 @@ class BaseHighlightModelFast():
         for i in range(self.num_teams):
             if not os.path.exists(os.path.join(self.game_dir, f"{self.team_names[i]}{self.video_dir_postfix}")):
                         os.mkdir(os.path.join(self.game_dir, f"{self.team_names[i]}{self.video_dir_postfix}"))
-
-
-    def check_video_info(self, video_names, info_list, info_name):
-
-        most_element = max(info_list, key=info_list.count)
-        print(f"本次视频的{info_name}是{most_element}")
-        for i, info in enumerate(info_list):
-            if info != most_element:
-                print(f"{video_names[i]}的{info_name}是{info_list[i]}信息不一致，请检查")
-                
 
 
     def init_team_highlight_data(self):
@@ -882,6 +865,53 @@ def edit_video(input_video_path, add_music=False, add_cover=False, logo_path=Non
             os.rename(output_video_path, input_video_path)
             return input_video_path
         return output_video_path
+    
+def check_video_info_and_reencode(video_names):
+    video_codec_list = []
+    fps_list = []
+    resolution_list = []
+    for i, video_path in enumerate(video_names):
+        video_codec, video_tag, width, height, fps, time_base, audio_codec, sample_rate = get_video_info(video_path)
+        video_codec_list.append(video_codec)
+        fps_list.append(fps)
+        resolution_list.append(f"{width}x{height}")
+    target_fps = min(fps_list)
+    target_resolution = max(resolution_list, key=resolution_list.count)
+    target_codec = "h264"
+    target_codecs = ["h264", "libx264"]
+
+    print(f"本次视频的目标帧率是{target_fps}")
+    print(f"本次视频的目标编码格式是{target_codec}")
+    print(f"本次视频的目标分辨率是{target_resolution}")
+    print(f"本次视频的编码格式是{max(video_codec_list, key=video_codec_list.count)}")
+
+
+    for i, video_path in enumerate(video_names):
+        if video_codec_list[0] not in target_codecs or fps_list[0] != target_fps or resolution_list[0] != target_resolution:
+            print(f"视频{i+1}/{len(video_names)}, 需重新编码. 当前编码格式：{video_codec_list[0]}, 当前帧率：{fps_list[0]}, 当前分辨率：{resolution_list[0]}")
+            reencode(video_path, target_codec, target_fps, target_resolution)
+
+
+def reencode(video, target_codec, target_fps, target_resolution):
+    postfix = os.path.basename(video).split('.')[-1]
+    print(video, postfix)
+    origin_new_name = video.replace(f".{postfix}", f"_origin.{postfix}")
+    print(origin_new_name)
+    os.rename(video, origin_new_name)
+    if target_codec == "h264":
+        target_codec = "libx264"
+    command = ['ffmpeg', 
+               '-i', origin_new_name, 
+               '-c:v', target_codec, 
+               '-r', str(target_fps), 
+               '-s', target_resolution,
+               '-preset', 'ultrafast',
+               '-pix_fmt', 'yuv420p',
+               '-c:a', 'copy', 
+               video]
+    procress = FfmpegProcess(command)
+    procress.run()
+    os.remove(origin_new_name)
         
 
 

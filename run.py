@@ -8,6 +8,8 @@ import os
 import argparse
 import shutil
 import random
+from better_ffmpeg_progress import FfmpegProcess
+
 
 
 def multi_process_highlight_func(i, data_dir, music_path, font_path, logo_path, target_stats, add_cover=True, video_dir_postfix=""):
