@@ -206,7 +206,7 @@ class BaseHighlightModelFast():
         team = self.team_names[team_idx]
         target_path = os.path.join(self.game_dir, f"{team}{self.video_dir_postfix}", "highlight_{}.mp4".format(team))
         self.collections_whole_team[team_idx].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
-        
+        del_file(os.path.join(self.game_dir, self.team_names[team_idx]), "ts")
         
     def get_all_in_one_highlight(self, music_path=None):
         if music_path is not None:
@@ -257,7 +257,8 @@ class BaseHighlightModelFast():
 
             target_path = os.path.join(self.game_dir, f"{self.team_names[i]}{self.video_dir_postfix}", f"highlight_{self.team_names[i]}.{self.target_postfix}")
             self.collections_whole_team[i].download_highlight(self.videos, self.quarter_video_lens, music_path_new, target_path)
-
+        for i in range(len(self.team_names)):
+            del_file(os.path.join(self.game_dir, self.team_names[i]), "ts")
 
     def get_all_players_highlights(self, team_id, music_path=None, target_stats=None, add_cover=True):
         self.parse_player_highlight(target_stats)
@@ -273,8 +274,8 @@ class BaseHighlightModelFast():
                 video_path = self.collections_team_players[team_id][name].download_highlight(self.videos, self.quarter_video_lens, music_path_new, target_path)
                 if video_path:
                     self.collections_team_players[team_id][name].add_video_cover(self.basketball_events.player_stats[team_id], video_path, get_cover=add_cover, font_path=self.font_path, music_path=music_path_new, logo_path=self.logo_path, match_date=self.basketball_events.match_date, match_place=self.basketball_events.court_name, match_time=self.basketball_events.match_time)
-
-
+        for i in range(len(self.team_names)):
+            del_file(os.path.join(self.game_dir, self.team_names[i]), "ts")
     def get_all_highlights(self, music_path=None, target_stats=None, add_cover=True):
         self.parse_player_highlight(target_stats)
         for team_id in range(self.num_teams):
@@ -293,6 +294,8 @@ class BaseHighlightModelFast():
 
         if self.config["match_type"] == "友谊赛":
             self.get_all_teams_highlights(music_path=music_path)
+        for i in range(len(self.team_names)):
+            del_file(os.path.join(self.game_dir, self.team_names[i]), "ts")
 
 
 
@@ -531,9 +534,9 @@ def concatenate_clips(output_file, clips, delete_clips=False):
         subprocess.run(command, check=True)
 
 
-        if delete_clips:
-            for clip in clips:
-                os.remove(clip)
+        # if delete_clips:
+        #     for clip in clips:
+        #         os.remove(clip)
         os.remove(txt_file)
 
     except subprocess.CalledProcessError as e:
@@ -912,6 +915,15 @@ def reencode(video, target_codec, target_fps, target_resolution):
     procress = FfmpegProcess(command)
     procress.run()
     os.remove(origin_new_name)
+
+def del_file(filepath, suffix):
+    files = os.listdir(filepath)
+
+    for file in files:
+        if '.' in file:
+            suffix_tmp = file.split('.')[-1]
+            if suffix_tmp == suffix:
+                os.remove(os.path.join(filepath, file))
         
 
 
