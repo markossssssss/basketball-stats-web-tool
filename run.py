@@ -8,8 +8,6 @@ import os
 import argparse
 import shutil
 import random
-from better_ffmpeg_progress import FfmpegProcess
-
 
 
 def multi_process_highlight_func(i, data_dir, music_path, font_path, logo_path, target_stats, add_cover=True, video_dir_postfix=""):
@@ -73,6 +71,7 @@ def get_stats(args):
         stats_model.plot_stats_single_team(i, show=False, save=args.data_dir, title=title)
     if config["match_type"] == "友谊赛":
         stats_model.plot_stats_both_team(show=False, save=args.data_dir, title=title)
+        stats_model.save_table_file(save=args.data_dir)
 
 def dewu_post(video_dir, channels_set):
     dewu_model = DewuVideoUploader()

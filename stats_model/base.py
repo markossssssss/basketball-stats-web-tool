@@ -716,14 +716,9 @@ class BaseStatsModel():
         # print(name, op_team_scores, rounds)
 
         return round(op_team_scores / rounds * 10, 1)
-
-    def save_table_file(self, save=None):
-        if save is not None:
-            self.player_stats[0].to_csv(os.path.join(save, f"{self.team_names[0]}数据.csv"), encoding='utf-8')
-            self.player_stats[1].to_csv(os.path.join(save, f"{self.team_names[1]}数据.csv"), encoding='utf-8')
-
     def plot_table(self, fig, ax, team_idx, plot_team_name=True):
         raise NotImplementedError
+    
 
 
 if __name__ == '__main__':

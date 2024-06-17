@@ -4,6 +4,8 @@ from matplotlib.colors import LinearSegmentedColormap
 from plottable import Table, ColDef
 import matplotlib.font_manager as font_manager
 import matplotlib.pyplot as plt
+import os
+import pandas as pd
 
 
 class FriendshipMatchStatsModel(BaseStatsModel):
@@ -138,6 +140,13 @@ class FriendshipMatchStatsModel(BaseStatsModel):
                     # 如果设置字体需要添加"fontname": "Roboto"
                     textprops={"fontsize": 17, "ha": "center","weight": "bold"}, )
         return tab
+    
+    def save_table_file(self, save=None):
+        if save is not None:
+            self.player_stats[0].to_csv(os.path.join(save, f"{self.team_names[0]}数据.csv"), encoding='utf-8')
+            self.player_stats[1].to_csv(os.path.join(save, f"{self.team_names[1]}数据.csv"), encoding='utf-8')
+            pd.DataFrame(self.event_data.reset_index().sort_values(by=['Time', 'index']), columns=["Team","Player","OriginTime","Event","Info","Object"]).to_csv(os.path.join(save, f"明细数据表.csv"), encoding='utf-8', index=False)
+
 
 
 if __name__ == '__main__':
