@@ -917,13 +917,14 @@ def reencode(video, target_codec, target_fps, target_resolution):
     os.remove(origin_new_name)
 
 def del_file(filepath, suffix, video_dir_postfix=""):
+    filepath = f"{filepath}{video_dir_postfix}"
     files = os.listdir(filepath)
 
     for file in files:
         if '.' in file:
             suffix_tmp = file.split('.')[-1]
             if suffix_tmp == suffix:
-                os.remove(os.path.join(f"{filepath}{video_dir_postfix}", file))
+                os.remove(os.path.join(filepath, file))
         
 
 
