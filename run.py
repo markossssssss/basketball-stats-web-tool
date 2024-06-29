@@ -27,10 +27,10 @@ def multi_process_highlight_func(i, data_dir, music_path, font_path, logo_path, 
         pass
 
 
-def highlight(arg, target_stats=("scores", "assists", "blocks"), add_cover=True, video_dir_postfix=""):
+def highlight(arg, target_stats=("scores", "assists", "blocks"), add_cover=True, video_dir_postfix="", filtrate=True):
     hlc = BaseHighlightModelFast(arg.data_dir, arg.font_path, arg.logo_path, video_dir_postfix=video_dir_postfix)
 
-    hlc.get_all_highlights(music_path=get_music(args), target_stats=target_stats, add_cover=add_cover)
+    hlc.get_all_highlights(music_path=get_music(args), target_stats=target_stats, add_cover=add_cover, filtrate=filtrate)
 
 def get_music(args):
     music_path = args.music_path
@@ -178,11 +178,8 @@ if __name__ == "__main__":
             print("发布得物的视频需要指定音乐, 请用-music_path指定")
             raise ValueError()
         args.logo_path=None
-        if args.single_process:
-            highlight(args, target_stats, not args.no_cover, video_dir_postfix="_dewu")
-        else:
-            multi_process_highlight(args, target_stats, not args.no_cover, video_dir_postfix="_dewu")
-
+        highlight(args, target_stats, not args.no_cover, video_dir_postfix="_dewu", filtrate=True)
+        
         channels_set = ["main"]
         # channels_set = ["main", "random"]
 

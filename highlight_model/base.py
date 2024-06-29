@@ -276,10 +276,15 @@ class BaseHighlightModelFast():
                     self.collections_team_players[team_id][name].add_video_cover(self.basketball_events.player_stats[team_id], video_path, get_cover=add_cover, font_path=self.font_path, music_path=music_path_new, logo_path=self.logo_path, match_date=self.basketball_events.match_date, match_place=self.basketball_events.court_name, match_time=self.basketball_events.match_time)
         for i in range(len(self.team_names)):
             del_file(os.path.join(self.game_dir, self.team_names[i]), "ts", self.video_dir_postfix)
-    def get_all_highlights(self, music_path=None, target_stats=None, add_cover=True):
+    def get_all_highlights(self, music_path=None, target_stats=None, add_cover=True, filtrate=True):
+        if filtrate: 
+            target_stats = ["scores", "blocks"]
         self.parse_player_highlight(target_stats)
         for team_id in range(self.num_teams):
             for name in self.collections_team_players[team_id]:
+                if filtrate: 
+                    if self.basketball_events.player_stats[team_id]["得分"][name] < 6:
+                        continue
                 music_path_new = music_path
                 if music_path is not None:
                     if type(music_path) == list:
@@ -798,9 +803,9 @@ def get_video_cover(origin_video_info, logo_path, video_text, output_name, font_
     #         '-c:v', video_codec,
     #
     #     ]
-    # if base_cover_img_path:
-    #     os.remove(base_cover_img_path)
-    # os.remove(text_img_path)
+    if base_cover_img_path:
+        os.remove(base_cover_img_path)
+    os.remove(text_img_path)
 
     return output_name
 
@@ -853,6 +858,7 @@ def save_first_frame(input_video_path):
         "ffmpeg",
         "-i", input_video_path,  # 输入视频文件路径
         "-vframes", "1",  # 只提取一帧
+        '-y',
         first_frame_path  # 输出图片路径
     ]
     
