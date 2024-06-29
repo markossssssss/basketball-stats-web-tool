@@ -152,7 +152,7 @@ if __name__ == "__main__":
     parser.add_argument('data_dir', type=str, help='path of config file')
     parser.add_argument('-music_path', type=str, default=None, help='path of config file')
     parser.add_argument('-font_path', type=str, default="dream.ttf", help='path of font file')
-    parser.add_argument('-logo_path', type=str, default="logo4.png", help='path of logo file')
+    parser.add_argument('-logo_path', type=str, default="logo6.png", help='path of logo file')
     parser.add_argument('-single_process', action="store_true", default=False, help='单线程执行')
     parser.add_argument('-no_cover', action="store_true", default=False, help='不生成封面')
     parser.add_argument('-stats', action="store_true", default=False, help='只生成数据')

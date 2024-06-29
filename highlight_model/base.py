@@ -3,7 +3,7 @@ import pandas as pd
 from moviepy.editor import VideoFileClip
 import os
 from stats_model import auto_select_stats_model
-from PIL import ImageDraw, ImageFont, Image
+from PIL import ImageDraw, ImageFont, Image, ImageEnhance
 import subprocess
 import bisect
 import random
@@ -676,8 +676,14 @@ def draw_text_with_border(draw, pos, text, font, fill, border_color='black', bor
         draw.text((x + dx, y + dy), text, font=font, fill=shadowcolor)
     draw.text(pos, text, font=font, fill=fill)
 
-def create_fixed_size_text_image(video_text, text_image_path, font_path, image_size=(500, 400), logo_path=None):
+def create_fixed_size_text_image(video_text, text_image_path, font_path, image_size=(500, 400), logo_path=None, base_cover_img_path=None):
     img = Image.new('RGBA', image_size, (0, 0, 0, 255))  # 透明背景
+    if base_cover_img_path is not None:
+        base_cover_img = Image.open(base_cover_img_path)
+        img = base_cover_img.resize(image_size)
+        enhancer = ImageEnhance.Brightness(img)  # 注意：PIL本身不直接支持透明度增强，但可以通过亮度调整间接实现透明效果
+        img = enhancer.enhance(0.3)  # 调整亮度影响
+        
     draw = ImageDraw.Draw(img)
     font, small_font, medium_font = get_font_size(image_size[0], font_path)
 
@@ -716,7 +722,7 @@ def create_fixed_size_text_image(video_text, text_image_path, font_path, image_s
     return text_image_path
 
 
-def get_video_cover(origin_video_info, logo_path, video_text, output_name, font_path=None, text_img_path=None, duration=2, background_color='black'):
+def get_video_cover(origin_video_info, logo_path, video_text, output_name, font_path=None, text_img_path=None, duration=2, background_color='black', base_cover_img_path=None):
     video_codec, video_tag, width, height, fps, time_base, audio_codec, sample_rate = origin_video_info
     # print(origin_video_info)
     width = int(width)
@@ -729,7 +735,7 @@ def get_video_cover(origin_video_info, logo_path, video_text, output_name, font_
 
     if text_img_path is None:
         text_img_path = "tmp.png"
-    create_fixed_size_text_image(video_text, text_img_path, font_path, image_size=(width, height), logo_path=logo_path)
+    create_fixed_size_text_image(video_text, text_img_path, font_path, image_size=(width, height), logo_path=logo_path, base_cover_img_path=base_cover_img_path)
     if logo_path is not None:
         logo_size = Image.open(logo_path).size
 
@@ -792,8 +798,9 @@ def get_video_cover(origin_video_info, logo_path, video_text, output_name, font_
     #         '-c:v', video_codec,
     #
     #     ]
-
-    os.remove(text_img_path)
+    # if base_cover_img_path:
+    #     os.remove(base_cover_img_path)
+    # os.remove(text_img_path)
 
     return output_name
 
@@ -838,6 +845,22 @@ def get_video_info(video_path):
 
     return video_codec, video_tag, width, height, fps, time_base, audio_codec, sample_rate
 
+def save_first_frame(input_video_path):
+    base_name = input_video_path[:-4]
+    first_frame_path = f"{base_name}_first_frame.jpg"
+
+    ffmpeg_command = [
+        "ffmpeg",
+        "-i", input_video_path,  # 输入视频文件路径
+        "-vframes", "1",  # 只提取一帧
+        first_frame_path  # 输出图片路径
+    ]
+    
+    subprocess.run(ffmpeg_command)
+    return first_frame_path
+
+
+
 def edit_video(input_video_path, add_music=False, add_cover=False, logo_path=None, main_text=None, output_video_path=None, font_path=None, top_text=None, bottom_text=None, music_path=None, replace=False):
     if add_cover:
         # print(font_path, main_text, top_text, bottom_text)
@@ -847,8 +870,8 @@ def edit_video(input_video_path, add_music=False, add_cover=False, logo_path=Non
         cover_video_name_tmp = os.path.join(os.path.dirname(input_video_path), f'{video_base_name_split[0]}_cover.{video_base_name_split[1]}')
         cover_text_img_name_tmp = os.path.join(os.path.dirname(input_video_path), f'{video_base_name_split[0]}_cover_text.png')
         output_video_path = os.path.join(os.path.dirname(input_video_path), f'{video_base_name_split[0]}_new.{video_base_name_split[1]}') if output_video_path is None else output_video_path
-
-        get_video_cover(get_video_info(input_video_path), logo_path, video_text, cover_video_name_tmp, font_path=font_path, text_img_path=cover_text_img_name_tmp, duration=3)
+        first_frame_path =  save_first_frame(input_video_path)
+        get_video_cover(get_video_info(input_video_path), logo_path, video_text, cover_video_name_tmp, font_path=font_path, text_img_path=cover_text_img_name_tmp, duration=3, base_cover_img_path=first_frame_path)
         if add_music:
             music_path = music_path
         concatenate_video_with_cover(output_video_path, [cover_video_name_tmp, input_video_path], get_video_info(input_video_path), music_path=music_path, delete_origin=False, target_dir=os.path.dirname(input_video_path), prefix=video_base_name_split[0])
