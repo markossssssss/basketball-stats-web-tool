@@ -143,9 +143,9 @@ class FriendshipMatchStatsModel(BaseStatsModel):
     
     def save_table_file(self, save=None):
         if save is not None:
-            self.player_stats[0].to_csv(os.path.join(save, f"{self.team_names[0]}数据.csv"), encoding='utf-8')
-            self.player_stats[1].to_csv(os.path.join(save, f"{self.team_names[1]}数据.csv"), encoding='utf-8')
-            pd.DataFrame(self.event_data.reset_index().sort_values(by=['Time', 'index']), columns=["Team","Player","OriginTime","Event","Info","Object"]).to_csv(os.path.join(save, f"明细数据表.csv"), encoding='utf-8', index=False)
+            self.player_stats[0].to_csv(os.path.join(save, f"{self.team_names[0]}数据.csv"), encoding='utf-8-sig')
+            self.player_stats[1].to_csv(os.path.join(save, f"{self.team_names[1]}数据.csv"), encoding='utf-8-sig')
+            pd.DataFrame(self.event_data.reset_index().sort_values(by=['Time', 'index']), columns=["Team","Player","OriginTime","Event","Info","Object"]).to_csv(os.path.join(save, f"明细数据表.csv"), encoding='utf-8-sig', index=False)
 
 
 

@@ -134,7 +134,10 @@ class BaseStatsModel():
         columns = [terms[stat_item] for stat_item in self.config["stats"]]
         self.player_stats = [pd.DataFrame(columns=columns) for i in range(self.num_teams)]
         for i, team in enumerate(self.team_names):
-            for name in self.player_names[i]:
+            target_names = self.player_names[i]
+            if self.match_type == "友谊赛":
+                target_names += ["全队"]
+            for name in target_names:
                 row = {terms["name"]: name}
                 for stat_item in self.target_stats:
                     if stat_item in high_level_stats:
@@ -143,6 +146,7 @@ class BaseStatsModel():
                     row[terms[stat_item]] = value
                 # print(row)
                 self.player_stats[i] = append(self.player_stats[i], row)
+            
         for stat_item in high_level_stats:
             if stat_item in self.target_stats:
                 eval("self.get_{}()".format(stat_item))
@@ -158,7 +162,11 @@ class BaseStatsModel():
         self.scores_rev = "{}:{}".format(scores[1], scores[0])
 
     def get_total_scores(self):
-        return sum(list(self.player_stats[0]["得分"])), sum(list(self.player_stats[1]["得分"]))
+        if self.match_type == "友谊赛":
+            # 友谊赛多加了一栏全队得分，所以总得分计算翻倍了
+            return sum(list(self.player_stats[0]["得分"]))//2, sum(list(self.player_stats[1]["得分"]))//2
+        else:
+            return sum(list(self.player_stats[0]["得分"])), sum(list(self.player_stats[1]["得分"]))
 
 
     def plot_stats_single_team(self, team_idx, show=False, save=None, title=None):
@@ -281,7 +289,8 @@ class BaseStatsModel():
             # 这些数据，说明要查找的数据项，队伍和目标球员不在一个队
             if Event in ["steals", "blocks", "fouls"]:
                 same_team = False
-            query_str += f"(df.Object == '{Object}')&"
+            if Object != "全队":
+                query_str += f"(df.Object == '{Object}')&"
         if Team is not None:
             # not check_event_team 说明不检测队伍（比如有临时换队情况，这时会出现抢断自己队、助攻别的队等）
             if not self.check_event_team and Event in ["assists", "steals", "blocks", "fouls"]:
@@ -289,7 +298,7 @@ class BaseStatsModel():
             else:
                 equal = "==" if same_team else "!="
                 query_str += f"(df.Team {equal} '{Team}')&"
-        if Player is not None:
+        if Player is not None and Player != "全队":
             query_str += f"(df.Player == '{Player}')&"
 
         if Info is not None:
@@ -528,6 +537,8 @@ class BaseStatsModel():
                 EFF += (int(r["得分"]) + int(r["篮板"]) + int(r["助攻"]) + int(r["抢断"]) + int(
                     r["盖帽"] - int(r["失误"])))
                 EFF -= (parse_shoots(r["2分"]) + parse_shoots(r["3分"]) + parse_shoots(r["罚球"]))
+                if r["姓名"] == "全队":
+                    EFF /= 5
                 self.player_stats[idx].loc[i, "效率值"] = EFF
 
     def get_USG(self):
@@ -554,17 +565,22 @@ class BaseStatsModel():
     def get_oncourt_per_scores(self, name, team_id):
         team_name = self.team_names[team_id]
         team_name_op = self.team_names[1 - team_id]
-        get_on_arr = sorted(list(
-            self.event_data[(self.event_data.Team == team_name) & (self.event_data.Object == name) & (
-                        self.event_data.Event == "换人")]["Time"]))
-        get_off_arr = sorted(list(
-            self.event_data[(self.event_data.Team == team_name) & (self.event_data.Player == name) & (
-                        self.event_data.Event == "换人")]["Time"]))
+        if name != "全队":
+            get_on_arr = sorted(list(
+                self.event_data[(self.event_data.Team == team_name) & (self.event_data.Object == name) & (
+                            self.event_data.Event == "换人")]["Time"]))
+            get_off_arr = sorted(list(
+                self.event_data[(self.event_data.Team == team_name) & (self.event_data.Player == name) & (
+                            self.event_data.Event == "换人")]["Time"]))
 
-        assert (len(get_on_arr) == len(get_off_arr)) or (len(get_on_arr) == len(get_off_arr) + 1)
+            assert (len(get_on_arr) == len(get_off_arr)) or (len(get_on_arr) == len(get_off_arr) + 1)
 
-        if len(get_on_arr) > len(get_off_arr):
-            get_off_arr.append(sum(self.actual_quarter_times))
+            if len(get_on_arr) > len(get_off_arr):
+                get_off_arr.append(sum(self.actual_quarter_times))
+
+        else:
+            get_on_arr = [0]
+            get_off_arr = [sum(self.actual_quarter_times)]
 
         time = 0
         if len(get_on_arr):
@@ -635,17 +651,21 @@ class BaseStatsModel():
     def get_oncourt_per_loses(self, name, team_id):
         team_name = self.team_names[team_id]
         team_name_op = self.team_names[1 - team_id]
-        get_on_arr = sorted(list(
-            self.event_data[(self.event_data.Team == team_name) & (self.event_data.Object == name) & (
-                        self.event_data.Event == "换人")]["Time"]))
-        get_off_arr = sorted(list(
-            self.event_data[(self.event_data.Team == team_name) & (self.event_data.Player == name) & (
-                        self.event_data.Event == "换人")]["Time"]))
+        if name != "全队":
+            get_on_arr = sorted(list(
+                self.event_data[(self.event_data.Team == team_name) & (self.event_data.Object == name) & (
+                            self.event_data.Event == "换人")]["Time"]))
+            get_off_arr = sorted(list(
+                self.event_data[(self.event_data.Team == team_name) & (self.event_data.Player == name) & (
+                            self.event_data.Event == "换人")]["Time"]))
 
-        assert (len(get_on_arr) == len(get_off_arr)) or (len(get_on_arr) == len(get_off_arr) + 1)
+            assert (len(get_on_arr) == len(get_off_arr)) or (len(get_on_arr) == len(get_off_arr) + 1)
 
-        if len(get_on_arr) > len(get_off_arr):
-            get_off_arr.append(sum(self.actual_quarter_times))
+            if len(get_on_arr) > len(get_off_arr):
+                get_off_arr.append(sum(self.actual_quarter_times))
+        else:
+            get_on_arr = [0]
+            get_off_arr = [sum(self.actual_quarter_times)]
 
         time = 0
         if len(get_on_arr):
