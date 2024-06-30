@@ -27,7 +27,7 @@ def multi_process_highlight_func(i, data_dir, music_path, font_path, logo_path, 
         pass
 
 
-def highlight(arg, target_stats=("scores", "assists", "blocks"), add_cover=True, video_dir_postfix="", filtrate=True):
+def highlight(arg, target_stats=("scores", "assists", "blocks"), add_cover=True, video_dir_postfix="", filtrate=False):
     hlc = BaseHighlightModelFast(arg.data_dir, arg.font_path, arg.logo_path, video_dir_postfix=video_dir_postfix)
 
     hlc.get_all_highlights(music_path=get_music(args), target_stats=target_stats, add_cover=add_cover, filtrate=filtrate)
