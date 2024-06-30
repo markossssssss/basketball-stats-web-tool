@@ -276,7 +276,7 @@ class BaseHighlightModelFast():
                     self.collections_team_players[team_id][name].add_video_cover(self.basketball_events.player_stats[team_id], video_path, get_cover=add_cover, font_path=self.font_path, music_path=music_path_new, logo_path=self.logo_path, match_date=self.basketball_events.match_date, match_place=self.basketball_events.court_name, match_time=self.basketball_events.match_time)
         for i in range(len(self.team_names)):
             del_file(os.path.join(self.game_dir, self.team_names[i]), "ts", self.video_dir_postfix)
-    def get_all_highlights(self, music_path=None, target_stats=None, add_cover=True, filtrate=True):
+    def get_all_highlights(self, music_path=None, target_stats=None, add_cover=True, filtrate=False):
         if filtrate: 
             target_stats = ["scores", "blocks"]
         self.parse_player_highlight(target_stats)
