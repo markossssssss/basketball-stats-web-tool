@@ -112,16 +112,21 @@ def dewu_post(video_dir, channels_set):
 
         file_name = os.path.join(video_dir, team_name, video_name)
 
-        if player_name == team_name:
-            continue
         # print("")
         if team_name.endswith("_dewu"):
             team_name = team_name[:-5]
             if team_name in ["黑队", "白队", "Team A", "Team B", "Team C", "Team D"]:
-                team_name = f"{court_name}分站赛"
+                team_postfix = "分站赛"
+                # team_name = f"{court_name}分站赛"
             else:
-                team_name = f"{team_name}队"
-        title = f"上海村BA来袭! 一起来看{team_name}{player_name}精彩集锦!"
+                team_postfix = "队"
+                # team_name = f"{team_name}队"
+        if player_name in team_name:
+            # 球队集锦
+            title = f"上海村BA来袭! 一起来看{team_name}{team_postfix}精彩集锦!"
+        else:
+            title = f"上海村BA来袭! 一起来看{team_name}{team_postfix}{player_name}精彩集锦!"
+
 
         des = f"一起来看村BA上海赛区{team_name}{player_name}精彩集锦。 村BA上海赛区由AllyGo赞助、JUSHOOP提供AI集锦服务，参与村BA即能免费获得精彩集锦，还能角逐得物提供的球鞋奖励，快来参与吧！"
 
@@ -180,8 +185,8 @@ if __name__ == "__main__":
         args.logo_path=None
         highlight(args, target_stats, not args.no_cover, video_dir_postfix="_dewu", filtrate=True)
         
-        channels_set = ["main"]
-        # channels_set = ["main", "random"]
+        # channels_set = ["main"]
+        channels_set = ["main", "random"]
 
         dewu_post(args.data_dir, channels_set)
 
