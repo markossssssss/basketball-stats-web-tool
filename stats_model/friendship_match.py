@@ -164,9 +164,9 @@ class FriendshipMatchStatsModel(BaseStatsModel):
             return ColDef(stat_name, width=1.3, textprops={"fontsize": 19,"ha": "left", "weight": "bold"}, title=title)
         elif stat_name in ["上场时间", "后场+前场篮板", "球权使用率", "真实命中率"]:
             width = 0.8
-            if "+" in title:
+            if "+" in stat_name:
                 title = title.replace("+", "\n+")
-            if "率" in title:
+            if "率" in stat_name:
                 formatter=decimal_to_percent
         elif stat_name == "在场得分(10回合)":
             width = 1.0
