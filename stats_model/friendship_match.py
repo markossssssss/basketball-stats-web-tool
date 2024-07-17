@@ -17,14 +17,18 @@ class FriendshipMatchStatsModel(BaseStatsModel):
 
 
     # 需要计算的数据项
-    target_stats = ["atps", "ft_atps", "time", "scores", "assists", "rebounds", "steals", "blocks", "2PTs", "3PTs",
-                    "FTs", "OD_rebounds", "fouls", "TOs", "make_fouls", "USG", "TS", "EFF", "oncourt_per_scores",
+    target_stats = ["atpts", "fts_atpts", "time", "scores", "assists", "rebounds", "steals", "blocks", "2pts", "3pts",
+                    "fts", "od_rebounds", "fouls", "tos", "make_fouls", "USG", "TS", "EFF", "oncourt_per_scores",
                     "oncourt_per_loses"]
 
     # 需要展示的数据项
     table_cols = ["上场时间", "得分", "篮板", "助攻", "抢断", "盖帽", "2分", "3分", "罚球",
                   "后场+前场篮板", "失误", "球权使用率", "真实命中率", "效率值", "在场得分(10回合)",
                   "在场失分(10回合)"]
+    
+    # table_cols_ENG = ["MIN", "PTS", "REB", "AST", "STL", "BLK", "2FG", "3FG", "FT",
+    #               "DREB+OREB", "TO", "USG%", "TS%", "EFF", "ORtg(10 rounds)",
+    #               "DRtg(10 rounds)"]
 
     def check_switch_people(self):
         oncourt_players = {}
@@ -95,36 +99,39 @@ class FriendshipMatchStatsModel(BaseStatsModel):
         fig.set_facecolor(bg_color)
         ax.set_facecolor(bg_color)
 
-        cmap = LinearSegmentedColormap.from_list(
-            name="bugw", colors=["#FF0000", "#e0e8df", "#00EE76"], N=256
-        )
-        cmap_r = LinearSegmentedColormap.from_list(
-            name="bugw", colors=["#00EE76", "#e0e8df", "#FF0000"], N=256
-        )
-
         team_title = self.team_names[team_idx] if plot_team_name else ""
-        table_col_defs = [
-            ColDef("姓名", width=1.3, textprops={"fontsize": 19,"ha": "left", "weight": "bold"}, title=team_title),
-            ColDef("上场时间", width=0.8),
-            ColDef("得分", width=0.5),
-            ColDef("助攻", width=0.5),
-            ColDef("篮板", width=0.5),
-            ColDef("抢断", width=0.5),
-            ColDef("盖帽", width=0.5),
-            ColDef("2分", width=0.5),
-            ColDef("3分", width=0.5),
-            ColDef("罚球", width=0.5),
-            ColDef("后场+前场篮板", width=0.8, title="后场+\n前场篮板"),
-            ColDef("失误", width=0.5),
-            ColDef("球权使用率", width=0.8, formatter=decimal_to_percent),
-            ColDef("真实命中率", width=0.8, formatter=decimal_to_percent),
-            ColDef("效率值", width=0.5,
-                   text_cmap=normed_cmap(self.player_stats[team_idx]["效率值"], cmap=cmap, num_stds=1.2)),
-            ColDef("在场得分(10回合)", width=1.0, title="在场得分\n(10回合)",
-                   text_cmap=normed_cmap(self.player_stats[team_idx]["在场得分(10回合)"], cmap=cmap, num_stds=1)),
-            ColDef("在场失分(10回合)", width=1.0, title="在场失分\n(10回合)",
-                   text_cmap=normed_cmap(self.player_stats[team_idx]["在场失分(10回合)"], cmap=cmap_r, num_stds=1))
-        ]
+
+        table_col_defs = []
+        table_col_defs.append(self.get_col("姓名", team_idx, title=team_title))
+        for stat_name in self.table_cols:
+            table_col_defs.append(self.get_col(stat_name, team_idx))
+
+        # print(table_col_defs)
+        # table_col_defs = [
+        #     ColDef("姓名", width=1.3, textprops={"fontsize": 19,"ha": "left", "weight": "bold"}, title=team_title),
+        #     ColDef("上场时间", width=0.8),
+        #     ColDef("得分", width=0.5),
+        #     ColDef("助攻", width=0.5),
+        #     ColDef("篮板", width=0.5),
+        #     ColDef("抢断", width=0.5),
+        #     ColDef("盖帽", width=0.5),
+        #     ColDef("2分", width=0.5),
+        #     ColDef("3分", width=0.5),
+        #     ColDef("罚球", width=0.5),
+        #     ColDef("后场+前场篮板", width=0.8, title="后场+\n前场篮板"),
+        #     ColDef("失误", width=0.5),
+        #     ColDef("球权使用率", width=0.8, formatter=decimal_to_percent),
+        #     ColDef("真实命中率", width=0.8, formatter=decimal_to_percent),
+        #     ColDef("效率值", width=0.5,
+        #            text_cmap=normed_cmap(self.player_stats[team_idx]["效率值"], cmap=cmap, num_stds=1.2)),
+        #     ColDef("在场得分(10回合)", width=1.0, title="在场得分\n(10回合)",
+        #            text_cmap=normed_cmap(self.player_stats[team_idx]["在场得分(10回合)"], cmap=cmap, num_stds=1)),
+        #     ColDef("在场失分(10回合)", width=1.0, title="在场失分\n(10回合)",
+        #            text_cmap=normed_cmap(self.player_stats[team_idx]["在场失分(10回合)"], cmap=cmap_r, num_stds=1))
+        # ]
+
+        # print(table_col_defs)
+        # exit()
 
         tab = Table(self.player_stats[team_idx],
                     ax=ax,
@@ -140,6 +147,40 @@ class FriendshipMatchStatsModel(BaseStatsModel):
                     # 如果设置字体需要添加"fontname": "Roboto"
                     textprops={"fontsize": 17, "ha": "center","weight": "bold"}, )
         return tab
+    
+    def get_col(self, stat_name, team_idx, title=None):
+        width = 0.5
+        formatter = None
+        text_cmap = None
+        cmap = LinearSegmentedColormap.from_list(
+            name="bugw", colors=["#FF0000", "#e0e8df", "#00EE76"], N=256
+        )
+        cmap_r = LinearSegmentedColormap.from_list(
+            name="bugw", colors=["#00EE76", "#e0e8df", "#FF0000"], N=256
+        )
+        if title is None:
+            title = self.terms_en[stat_name] if self.use_en else stat_name
+        if stat_name == "姓名":
+            return ColDef(stat_name, width=1.3, textprops={"fontsize": 19,"ha": "left", "weight": "bold"}, title=title)
+        elif stat_name in ["上场时间", "后场+前场篮板", "球权使用率", "真实命中率"]:
+            width = 0.8
+            if "+" in title:
+                title = title.replace("+", "\n+")
+            if "率" in title:
+                formatter=decimal_to_percent
+        elif stat_name == "在场得分(10回合)":
+            width = 1.0
+            title = title.replace("(", "\n(")
+            text_cmap=normed_cmap(self.player_stats[team_idx]["在场得分(10回合)"], cmap=cmap, num_stds=1)
+        elif stat_name == "在场失分(10回合)":
+            width = 1.0
+            title = title.replace("(", "\n(")
+            text_cmap=normed_cmap(self.player_stats[team_idx]["在场失分(10回合)"], cmap=cmap_r, num_stds=1)
+        elif stat_name == "效率值":
+            text_cmap = normed_cmap(self.player_stats[team_idx]["效率值"], cmap=cmap, num_stds=1.2)
+
+        return ColDef(stat_name, width=width, title=title,
+                   text_cmap=text_cmap, formatter=formatter)
     
     def save_table_file(self, save=None):
         if save is not None:
