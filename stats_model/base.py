@@ -143,7 +143,7 @@ class BaseStatsModel():
         self.player_names = [[] for i in self.team_names]
         event_data_switch = self.event_data[self.event_data.Event == "换人"]
         for i, r in event_data_switch.iterrows():
-            print(r)
+            # print(r)
             team_idx = self.team_names.index(r["Team"])
             if not r["Object"] in self.player_names[team_idx]:
                 self.player_names[team_idx].append(r["Object"])
