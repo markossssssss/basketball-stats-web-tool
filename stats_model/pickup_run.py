@@ -12,7 +12,7 @@ class PickupRunStatsModel(BaseStatsModel):
     match_type = "球局"
     max_teams = 4
     JUSHOOP_title_txt = "JUSHOOP FULLCOURT RUN"
-    target_stats = ["atps", "scores", "assists", "rebounds", "steals", "blocks", "2PTs", "3PTs", "FTs", "OD_rebounds", "TOs", "TS", "EFF"]
+    target_stats = ["atpts", "scores", "assists", "rebounds", "steals", "blocks", "2pts", "3pts", "fts", "od_rebounds", "tos", "TS", "EFF"]
 
     table_cols = ["得分", "篮板", "助攻", "抢断", "盖帽", "2分", "3分",
                   "后场+前场篮板", "失误", "真实命中率", "效率值"]
