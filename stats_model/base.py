@@ -33,20 +33,24 @@ terms = {
     "3pts": "3分",
     "fts": "罚球",
     "od_rebounds": "后场+前场篮板",
+    "def_rebounds": "后场篮板",
+    "off_rebounds": "前场篮板",
     "fouls": "犯规",
     "tos": "失误",
     "make_fouls": "造成犯规",
     "EFF": "效率值",
     "oncourt_per_scores": "在场得分(10回合)",
     "oncourt_per_loses": "在场失分(10回合)",
+    "oncourt_scores": "在场得分",
+    "oncourt_loses": "在场失分",
+    "rounds": "回合数",
     "TS": "真实命中率",
     "USG": "球权使用率",
     "atpts": "出手",
-    "fts_atpts": "罚球出手"
+    "fts_atpts": "罚球出手",
+    "plus_minus": "正负值",
 }
-["MIN", "PTS", "REB", "AST", "STL", "BLK", "2FG", "3FG", "FT",
-                  "DREB+OREB", "TO", "USG%", "TS%", "EFF", "ORtg(10 rounds)",
-                  "DRtg(10 rounds)"]
+
 terms_en = {
     "姓名": "Name",
     "上场时间": "MIN",
@@ -59,6 +63,8 @@ terms_en = {
     "3分": "3FG",
     "罚球": "FT",
     "后场+前场篮板": "DREB+OREB",
+    "前场篮板": "OREB",
+    "后场篮板": "DREB",
     "犯规": "PF",
     "失误": "TO",
     "造成犯规": "PFD",
@@ -68,12 +74,13 @@ terms_en = {
     "真实命中率": "TS%",
     "球权使用率": "USG%",
     "出手": "FGA",
-    "罚球出手": "FTA"
+    "罚球出手": "FTA",
+    "正负值": "+/-"
 }
 
 
 # 需要等所有基础数据都出来之后才能计算的数据
-high_level_stats = ["EFF", "USG"]
+high_level_stats = ["EFF", "USG", "oncourt_per_scores", "oncourt_per_loses", "plus_minus"]
 
 
 def append(df, row_dict):
@@ -116,6 +123,11 @@ class BaseStatsModel():
             self.use_en = self.config["english"]
         except:
             self.use_en = False
+        try:
+            self.user_table_cols = self.config["target_stats"]
+        except:
+            self.user_table_cols = None
+
         self.preprocess()
         self.player_stats = None
         self.scores = None
@@ -601,8 +613,8 @@ class BaseStatsModel():
                     r["盖帽"] - int(r["失误"])))
                 EFF -= (parse_shoots(r["2分"]) + parse_shoots(r["3分"]) + parse_shoots(r["罚球"]))
                 if r["姓名"] == "全队":
-                    EFF /= 5
-                self.player_stats[idx].loc[i, "效率值"] = EFF
+                    EFF /= (len(self.player_stats[idx]) - 1)
+                self.player_stats[idx].loc[i, "效率值"] = round(EFF, 1)
 
     def get_USG(self):
         for idx, team in enumerate(self.team_names):
@@ -624,9 +636,7 @@ class BaseStatsModel():
 
                 self.player_stats[idx].loc[i, "球权使用率"] = round(USG, 3)
 
-    
-
-    def get_oncourt_scores(self, name, team_id):
+    def get_rounds(self, name, team_id):
         team_name = self.team_names[team_id]
         team_name_op = self.team_names[1 - team_id]
         get_on_arr = sorted(list(
@@ -639,121 +649,8 @@ class BaseStatsModel():
         if len(get_on_arr) > len(get_off_arr):
             get_off_arr.append(sum(self.actual_quarter_times))
 
-        time = 0
-        if len(get_on_arr):
-            for i in range(len(get_on_arr)):
-                time += get_off_arr[i] - get_on_arr[i]
 
-        if time == 0:
-            return 0
-
-        team_scores = 0
         rounds = 0
-        """计算在场得分与失分"""
-        for i in range(len(get_on_arr)):
-            scores_df = self.event_data[(self.event_data.Time >= get_on_arr[i]) & (self.event_data.Time <= get_off_arr[i]) & (
-                    self.event_data.Team == team_name) & (self.event_data.Info == "进球")]
-            get_assist_df = self.event_data[(self.event_data.Time >= get_on_arr[i]) & (self.event_data.Time <= get_off_arr[i]) & (
-                    self.event_data.Team == team_name) & (self.event_data.Event == "助攻")]
-            team_scores += (
-                    len(scores_df[scores_df.Event == "3分球出手"]) * 3 + len(scores_df[scores_df.Event == "2分球出手"]) * 2 + len(
-                scores_df[scores_df.Event == "罚球出手"]))
-            team_scores += (
-                    len(get_assist_df[get_assist_df.Info == "3分"]) * 3 + len(get_assist_df[get_assist_df.Info == "2分"]) * 2)
-        # print(name, team_scores, rounds)
-
-        return round(team_scores, 1)
-
-
-    def get_oncourt_loses(self, name, team_id):
-        team_name = self.team_names[team_id]
-        team_name_op = self.team_names[1 - team_id]
-        get_on_arr = sorted(list(
-            self.event_data[(self.event_data.Team == team_name) & (self.event_data.Object == name) & (self.event_data.Event == "换人")]["Time"]))
-        get_off_arr = sorted(list(
-            self.event_data[(self.event_data.Team == team_name) & (self.event_data.Player == name) & (self.event_data.Event == "换人")]["Time"]))
-
-        assert (len(get_on_arr) == len(get_off_arr)) or (len(get_on_arr) == len(get_off_arr) + 1)
-
-        if len(get_on_arr) > len(get_off_arr):
-            get_off_arr.append(sum(self.actual_quarter_times))
-
-        time = 0
-        if len(get_on_arr):
-            for i in range(len(get_on_arr)):
-                time += get_off_arr[i] - get_on_arr[i]
-        if time == 0:
-            return 0
-
-        op_team_scores = 0
-        """计算在场得分与失分"""
-        for i in range(len(get_on_arr)):
-            op_scores_df = self.event_data[(self.event_data.Time >= get_on_arr[i]) & (self.event_data.Time <= get_off_arr[i]) & (
-                    self.event_data.Team == team_name_op) & (self.event_data.Info == "进球")]
-            op_get_assist_df = self.event_data[(self.event_data.Time >= get_on_arr[i]) & (self.event_data.Time <= get_off_arr[i]) & (
-                    self.event_data.Team == team_name_op) & (self.event_data.Event == "助攻")]
-
-            op_team_scores += (
-                    len(op_scores_df[op_scores_df.Event == "3分球出手"]) * 3 + len(
-                op_scores_df[op_scores_df.Event == "2分球出手"]) * 2 + len(
-                op_scores_df[op_scores_df.Event == "罚球出手"]))
-            op_team_scores += (
-                    len(op_get_assist_df[op_get_assist_df.Info == "3分"]) * 3 + len(
-                op_get_assist_df[op_get_assist_df.Info == "2分"]) * 2)
-
-        return round(op_team_scores, 1)
-    
-
-    def get_oncourt_per_scores(self, name, team_id):
-        team_name = self.team_names[team_id]
-        team_name_op = self.team_names[1 - team_id]
-        if name != "全队":
-            get_on_arr = sorted(list(
-                self.event_data[(self.event_data.Team == team_name) & (self.event_data.Object == name) & (
-                            self.event_data.Event == "换人")]["Time"]))
-            get_off_arr = sorted(list(
-                self.event_data[(self.event_data.Team == team_name) & (self.event_data.Player == name) & (
-                            self.event_data.Event == "换人")]["Time"]))
-
-            assert (len(get_on_arr) == len(get_off_arr)) or (len(get_on_arr) == len(get_off_arr) + 1)
-
-            if len(get_on_arr) > len(get_off_arr):
-                get_off_arr.append(sum(self.actual_quarter_times))
-
-        else:
-            get_on_arr = [0]
-            get_off_arr = [sum(self.actual_quarter_times)]
-
-        time = 0
-        if len(get_on_arr):
-            for i in range(len(get_on_arr)):
-                time += get_off_arr[i] - get_on_arr[i]
-
-        if time == 0:
-            return 0
-
-        team_scores = 0
-        rounds = 0
-        """计算在场得分与失分"""
-        for i in range(len(get_on_arr)):
-            scores_df = self.event_data[
-                (self.event_data.Time >= get_on_arr[i]) & (self.event_data.Time <= get_off_arr[i]) & (
-                        self.event_data.Team == team_name) & (self.event_data.Info == "进球")]
-            get_assist_df = self.event_data[
-                (self.event_data.Time >= get_on_arr[i]) & (self.event_data.Time <= get_off_arr[i]) & (
-                        self.event_data.Team == team_name) & (self.event_data.Event == "助攻")]
-            team_scores += (
-                    len(scores_df[scores_df.Event == "3分球出手"]) * 3 + len(
-                scores_df[scores_df.Event == "2分球出手"]) * 2 + len(
-                scores_df[scores_df.Event == "罚球出手"]))
-            team_scores += (
-                    len(get_assist_df[get_assist_df.Info == "3分"]) * 3 + len(
-                get_assist_df[get_assist_df.Info == "2分"]) * 2)
-
-        """计算在场回合数"""
-        """
-        进攻结束回合标志：被抢断，进攻犯规/违体犯规进攻，失误，进球，对方投篮犯规/普通犯规犯满, 被抢到后场篮板
-        """
         for i in range(len(get_on_arr)):
             filtered_event_data = self.event_data[
                 (self.event_data.Time >= get_on_arr[i]) & (self.event_data.Time <= get_off_arr[i])]
@@ -785,12 +682,60 @@ class BaseStatsModel():
 
         if rounds == 0:
             rounds += 1
+        return rounds
 
+    
+
+    def get_oncourt_scores(self, name, team_id):
+        team_name = self.team_names[team_id]
+        team_name_op = self.team_names[1 - team_id]
+        if name != "全队":
+            get_on_arr = sorted(list(
+                self.event_data[(self.event_data.Team == team_name) & (self.event_data.Object == name) & (
+                            self.event_data.Event == "换人")]["Time"]))
+            get_off_arr = sorted(list(
+                self.event_data[(self.event_data.Team == team_name) & (self.event_data.Player == name) & (
+                            self.event_data.Event == "换人")]["Time"]))
+
+            assert (len(get_on_arr) == len(get_off_arr)) or (len(get_on_arr) == len(get_off_arr) + 1)
+
+            if len(get_on_arr) > len(get_off_arr):
+                get_off_arr.append(sum(self.actual_quarter_times))
+
+        else:
+            get_on_arr = [0]
+            get_off_arr = [sum(self.actual_quarter_times)]
+
+        time = 0
+        if len(get_on_arr):
+            for i in range(len(get_on_arr)):
+                time += get_off_arr[i] - get_on_arr[i]
+
+        if time == 0:
+            return 0
+
+        team_scores = 0
+        """计算在场得分与失分"""
+        for i in range(len(get_on_arr)):
+            scores_df = self.event_data[
+                (self.event_data.Time >= get_on_arr[i]) & (self.event_data.Time <= get_off_arr[i]) & (
+                        self.event_data.Team == team_name) & (self.event_data.Info == "进球")]
+            get_assist_df = self.event_data[
+                (self.event_data.Time >= get_on_arr[i]) & (self.event_data.Time <= get_off_arr[i]) & (
+                        self.event_data.Team == team_name) & (self.event_data.Event == "助攻")]
+            team_scores += (
+                    len(scores_df[scores_df.Event == "3分球出手"]) * 3 + len(
+                scores_df[scores_df.Event == "2分球出手"]) * 2 + len(
+                scores_df[scores_df.Event == "罚球出手"]))
+            team_scores += (
+                    len(get_assist_df[get_assist_df.Info == "3分"]) * 3 + len(
+                get_assist_df[get_assist_df.Info == "2分"]) * 2)
         # print(name, team_scores, rounds)
 
-        return round(team_scores / rounds * 10, 1)
+        return team_scores
 
-    def get_oncourt_per_loses(self, name, team_id):
+
+    def get_oncourt_loses(self, name, team_id):
         team_name = self.team_names[team_id]
         team_name_op = self.team_names[1 - team_id]
         if name != "全队":
@@ -817,7 +762,6 @@ class BaseStatsModel():
             return 0
 
         op_team_scores = 0
-        rounds = 0
         """计算在场得分与失分"""
         for i in range(len(get_on_arr)):
             op_scores_df = self.event_data[
@@ -835,49 +779,35 @@ class BaseStatsModel():
                     len(op_get_assist_df[op_get_assist_df.Info == "3分"]) * 3 + len(
                 op_get_assist_df[op_get_assist_df.Info == "2分"]) * 2)
 
-        """计算在场回合数"""
-        """
-        进攻结束回合标志：被抢断，进攻犯规/违体犯规进攻，失误，进球，对方投篮犯规/普通犯规犯满, 被抢到后场篮板
-        减去进攻篮板数增加的回合
+        
+        return op_team_scores
+    
 
-        #bug 出手后直接出界
-        #bug 争球
-        #bug 2+1算两回合
-        """
-        for i in range(len(get_on_arr)):
-            filtered_event_data = self.event_data[
-                (self.event_data.Time >= get_on_arr[i]) & (self.event_data.Time <= get_off_arr[i])]
-            stealed_rounds = len(
-                filtered_event_data[(filtered_event_data.Team == team_name) & (filtered_event_data.Event == "抢断")])
-            off_foul_rounds = len(
-                filtered_event_data[
-                    (filtered_event_data.Team == team_name_op) & (filtered_event_data.Info == "进攻犯规")]) + len(
-                filtered_event_data[
-                    (filtered_event_data.Team == team_name_op) & (filtered_event_data.Info == "违体进攻犯规")])
-            scored_rounds = len(
-                filtered_event_data[
-                    (filtered_event_data.Team == team_name_op) & (filtered_event_data.Info == "进球")]) + len(
-                filtered_event_data[
-                    (filtered_event_data.Team == team_name_op) & (filtered_event_data.Event == "助攻")]) - len(
-                filtered_event_data[
-                    (filtered_event_data.Team == team_name_op) & (filtered_event_data.Info == "进球") & (
-                            filtered_event_data.Event == "罚球出手")])
-            TO_rounds = len(
-                filtered_event_data[(filtered_event_data.Team == team_name_op) & (filtered_event_data.Event == "失误")])
-            def_rebounded_rounds = len(
-                filtered_event_data[(filtered_event_data.Team == team_name) & (filtered_event_data.Info == "后场")])
-            fouled_rounds = len(filtered_event_data[(filtered_event_data.Team == team_name) & (
-                    filtered_event_data.Info == "普通犯规犯满")]) + len(
-                filtered_event_data[(filtered_event_data.Team == team_name) & (filtered_event_data.Info == "投篮犯规")])
+    def get_oncourt_per_scores(self):
+        for idx, team in enumerate(self.team_names):
+            for i, r in self.player_stats[idx].iterrows():
+                ORtg = round(r["在场得分"] / r["回合数"] * 10, 1)
 
-            rounds += (
-                    stealed_rounds + off_foul_rounds + scored_rounds + TO_rounds + def_rebounded_rounds + fouled_rounds)
-        if rounds == 0:
-            rounds += 1
+                self.player_stats[idx].loc[i, "在场得分(10回合)"] = ORtg
 
-        # print(name, op_team_scores, rounds)
+    def get_oncourt_per_loses(self):
+        for idx, team in enumerate(self.team_names):
+            for i, r in self.player_stats[idx].iterrows():
+                DRtg = round(r["在场失分"] / r["回合数"] * 10, 1)
 
-        return round(op_team_scores / rounds * 10, 1)
+                self.player_stats[idx].loc[i, "在场失分(10回合)"] = DRtg
+    
+    def get_plus_minus(self):
+        for idx, team in enumerate(self.team_names):
+            for i, r in self.player_stats[idx].iterrows():
+                # print(r["在场得分"], r["在场失分"])
+                plus_minus = round(r["在场得分"] - r["在场失分"], 1)
+                sign = "+" if plus_minus >= 0 else "-"
+                if plus_minus == 0:
+                    sign = ""
+
+                # self.player_stats[idx].loc[i, "正负值_带符号"] = f"{sign}{abs(plus_minus)}"
+                self.player_stats[idx].loc[i, "正负值"] = plus_minus
     
 
     def get_oncourt_off_rounds(self, name, team_id):

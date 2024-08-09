@@ -6,6 +6,44 @@ import matplotlib.font_manager as font_manager
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
+from typing import Callable
+import matplotlib
+import numpy as np
+
+
+def my_normed_cmap(
+    s: pd.Series, cmap: matplotlib.colors.LinearSegmentedColormap, num_stds: float = 2.5
+) -> Callable:
+    
+    # print(s)
+    _median = 0
+    _std = s.std()
+
+
+    vmin = _median - num_stds * _std
+    vmax = _median + num_stds * _std
+
+    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
+    m = myScalarMappable(norm=norm, cmap=cmap)
+
+
+    return m.to_rgba
+
+class myScalarMappable(matplotlib.cm.ScalarMappable):
+    def to_rgba(self, x, alpha=None, bytes=False, norm=True):
+        # First check for special case, image input:
+        # print(x)
+        # x = float(x)
+        # print(x)
+        x = np.ma.asarray(x)
+        # print(x)
+        if x < 0:
+            x = -5000
+        if norm:
+            x = self.norm(x)
+        rgba = self.cmap(x, alpha=alpha, bytes=bytes)
+        return rgba
+
 
 
 class FriendshipMatchStatsModel(BaseStatsModel):
@@ -18,8 +56,8 @@ class FriendshipMatchStatsModel(BaseStatsModel):
 
     # 需要计算的数据项
     target_stats = ["atpts", "fts_atpts", "time", "scores", "assists", "rebounds", "steals", "blocks", "2pts", "3pts",
-                    "fts", "od_rebounds", "fouls", "tos", "make_fouls", "USG", "TS", "EFF", "oncourt_per_scores",
-                    "oncourt_per_loses"]
+                    "fts", "od_rebounds", "off_rebounds", "def_rebounds", "fouls", "tos", "make_fouls", "USG", "TS", "EFF", "oncourt_per_scores",
+                    "oncourt_per_loses", "oncourt_scores", "oncourt_loses", "rounds", "plus_minus"]
 
     # 需要展示的数据项
     table_cols = ["上场时间", "得分", "篮板", "助攻", "抢断", "盖帽", "2分", "3分", "罚球",
@@ -103,6 +141,8 @@ class FriendshipMatchStatsModel(BaseStatsModel):
 
         table_col_defs = []
         table_col_defs.append(self.get_col("姓名", team_idx, title=team_title))
+        if not self.user_table_cols is None:
+            self.table_cols = self.user_table_cols
         for stat_name in self.table_cols:
             table_col_defs.append(self.get_col(stat_name, team_idx))
 
@@ -171,13 +211,21 @@ class FriendshipMatchStatsModel(BaseStatsModel):
         elif stat_name == "在场得分(10回合)":
             width = 1.0
             title = title.replace("(", "\n(")
-            text_cmap=normed_cmap(self.player_stats[team_idx]["在场得分(10回合)"], cmap=cmap, num_stds=1)
+            text_cmap = normed_cmap(self.player_stats[team_idx]["在场得分(10回合)"], cmap=cmap, num_stds=1)
+        elif stat_name == "正负值":
+            # print("hello")
+            text_cmap = my_normed_cmap(self.player_stats[team_idx]["正负值"], cmap=cmap, num_stds=1.2)
         elif stat_name == "在场失分(10回合)":
             width = 1.0
             title = title.replace("(", "\n(")
-            text_cmap=normed_cmap(self.player_stats[team_idx]["在场失分(10回合)"], cmap=cmap_r, num_stds=1)
+            text_cmap = normed_cmap(self.player_stats[team_idx]["在场失分(10回合)"], cmap=cmap_r, num_stds=1)
         elif stat_name == "效率值":
             text_cmap = normed_cmap(self.player_stats[team_idx]["效率值"], cmap=cmap, num_stds=1.2)
+
+        if len(stat_name) >= 4 and width == 0.5:
+            width = 0.7
+        elif len(stat_name) == 3 and width == 0.5:
+            width = 0.6
 
         return ColDef(stat_name, width=width, title=title,
                    text_cmap=text_cmap, formatter=formatter)
