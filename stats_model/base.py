@@ -623,6 +623,8 @@ class BaseStatsModel():
             ft_atpts_total = 0
 
             for i, r in self.player_stats[idx].iterrows():
+                if r["姓名"] == "全队":
+                    continue
                 tos_total += r["失误"]
                 atpts_total += r["出手"]
                 ft_atpts_total += r["罚球出手"]
@@ -632,7 +634,7 @@ class BaseStatsModel():
                 time = int(r["上场时间"][:2]) * 60 + int(r["上场时间"][-2:])
                 if (time):
                     USG += (r["出手"] + 0.44 * r["罚球出手"] + r["失误"]) * self.quarter_time * self.quarters * 60
-                    USG /= (atpts_total + 0.44 * ft_atpts_total + tos_total) * time
+                    USG /= ((atpts_total + 0.44 * ft_atpts_total + tos_total) * time + 0.00001)
 
                 self.player_stats[idx].loc[i, "球权使用率"] = round(USG, 3)
 

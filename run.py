@@ -3,6 +3,7 @@ import pandas as pd
 from stats_model import auto_select_stats_model
 from highlight_model import BaseHighlightModelFast
 from dewu import DewuVideoUploader, get_tags, get_cookies
+from cunba_stats import post_stats
 # from
 import os
 import argparse
@@ -72,6 +73,9 @@ def get_stats(args):
     if config["match_type"] == "友谊赛":
         stats_model.plot_stats_both_team(show=False, save=args.data_dir, title=title)
         stats_model.save_table_file(save=args.data_dir)
+
+    if args.post_data:
+        post_stats(args.data_dir, config)
 
 def dewu_post(video_dir, channels_set):
     dewu_model = DewuVideoUploader()
@@ -165,6 +169,7 @@ if __name__ == "__main__":
     parser.add_argument('-dewu', action="store_true", default=False, help='发布得物视频')
     parser.add_argument("-dewu_club", type=str, default=None, help='本次发布的俱乐部名字')
     parser.add_argument("-music_dir", type=str, default='musics/', help='随机音乐的曲库')
+    parser.add_argument("-post_data", action="store_true", default=False, help='随机音乐的曲库')
     args = parser.parse_args()
 
     target_stats = ["scores", "assists", "blocks"] # 个人集锦中展示的内容
