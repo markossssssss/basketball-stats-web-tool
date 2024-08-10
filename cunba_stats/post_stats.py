@@ -124,7 +124,7 @@ def get_team_data_list(team_name, match_id, team_id, data_dir):
             r["姓名"] = r["姓名"].split("号")[1]
         except Exception as e:
             pass
-        r["投篮"] = f'{r["2分"].split("/")[0] + r["3分"].split("/")[0]}/{r["2分"].split("/")[1] + r["3分"].split("/")[1]}'
+        r["投篮"] = f'{int(r["2分"].split("/")[0]) + int(r["3分"].split("/")[0])}/{int(r["2分"].split("/")[1]) + int(r["3分"].split("/")[1])}'
         row_dict = {}
         row_dict["teamId"] = team_id
         row_dict["gameId"] = match_id
