@@ -120,7 +120,10 @@ def get_team_data_list(team_name, match_id, team_id, data_dir):
         
         if r["姓名"] == "全队":
             continue
-        r["姓名"] = r["姓名"].split("号")[0]
+        try:
+            r["姓名"] = r["姓名"].split("号")[1]
+        except Exception as e:
+            pass
         r["投篮"] = f'{r["2分"].split("/")[0] + r["3分"].split("/")[0]}/{r["2分"].split("/")[1] + r["3分"].split("/")[1]}'
         row_dict = {}
         row_dict["teamId"] = team_id
@@ -163,10 +166,10 @@ def post_stats(data_dir, config):
         "appId": APP_ID,
         "data": encrypted_data,
     }
-    print(post_json)
+    # print(post_json)
 
-    # response = post_request(url, data=post_json)
-    # print(response)
+    response = post_request(url, data=post_json)
+    print(response)
 
 
 

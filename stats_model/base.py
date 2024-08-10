@@ -789,15 +789,19 @@ class BaseStatsModel():
         for idx, team in enumerate(self.team_names):
             for i, r in self.player_stats[idx].iterrows():
                 ORtg = round(r["在场得分"] / r["回合数"] * 10, 1)
+                if r["姓名"] == "全队":
+                    ORtg /= (len(self.player_stats[idx]) - 1) * 5
 
-                self.player_stats[idx].loc[i, "在场得分(10回合)"] = ORtg
+                self.player_stats[idx].loc[i, "在场得分(10回合)"] = round(ORtg, 1)
 
     def get_oncourt_per_loses(self):
         for idx, team in enumerate(self.team_names):
             for i, r in self.player_stats[idx].iterrows():
                 DRtg = round(r["在场失分"] / r["回合数"] * 10, 1)
+                if r["姓名"] == "全队":
+                    DRtg /= (len(self.player_stats[idx]) - 1) * 5
 
-                self.player_stats[idx].loc[i, "在场失分(10回合)"] = DRtg
+                self.player_stats[idx].loc[i, "在场失分(10回合)"] = round(DRtg, 1)
     
     def get_plus_minus(self):
         for idx, team in enumerate(self.team_names):

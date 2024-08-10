@@ -96,9 +96,9 @@ def get_team_dicts(teams, matches, team_datas):
         for i, r in team_data.iterrows():
             if np.isnan(r["号码"]):
                 continue
-            play_number_dict[f'{r["号码"]}号{r["姓名"]}'] = int(r["号码"])
+            play_number_dict[f'{int(r["号码"])}号{r["姓名"]}'] = int(r["号码"])
         for i in range(1, 6):
-            play_number_dict[f"未知{i}"] = -1*i
+            play_number_dict[f"未知{i}"] = ""
             
 
         play_number_dicts.append(play_number_dict)
