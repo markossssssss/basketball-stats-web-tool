@@ -126,8 +126,8 @@ def get_team_data_list(team_name, match_id, team_id, data_dir):
             pass
         r["投篮"] = f'{int(r["2分"].split("/")[0]) + int(r["3分"].split("/")[0])}/{int(r["2分"].split("/")[1]) + int(r["3分"].split("/")[1])}'
         row_dict = {}
-        row_dict["teamId"] = team_id
-        row_dict["gameId"] = match_id
+        # row_dict["teamId"] = team_id
+        # row_dict["gameId"] = match_id
         for term in terms.keys():
             row_dict[term] = str(r[terms[term]])
         row_dict["uniformNumber"] = r["姓名"].split("号")[0]
@@ -151,6 +151,7 @@ def post_stats(data_dir, config):
     target_teams = [config["match_name"].split("_")[1], config["match_name"].split("_")[2]]
     match_id = config["match_id"]
     team_ids = config["team_ids"]
+    
 
     data = {}
     data["gameId"] = match_id
@@ -158,7 +159,27 @@ def post_stats(data_dir, config):
 
     data["targetTeam"] = get_team_data_list(target_teams[1], match_id, team_ids[1], data_dir)
 
-    print(str(data))
+
+    # print(data)
+    try:
+        scores_txt = config["scores"]
+        scores = [scores_txt.split(":")[0].strip(), scores_txt.split(":")[1].strip()]
+    except Exception:
+        scores = [sum([int(data[team_txt][i]["score"]) for i in range(len(data[team_txt]))]) for team_txt in ["sourceTeam", "targetTeam"]]
+
+    # print(scores)
+
+    winner_loser = [{"teamId":f"{team_ids[0]}", "score": f"{int(scores[0])}"}, {"teamId":f"{team_ids[1]}", "score": f"{int(scores[1])}"}]
+    
+    if scores[0] > scores[1]:
+        data["winner"] = winner_loser[0]
+        data["loser"] = winner_loser[1]
+    else:
+        data["winner"] = winner_loser[1]
+        data["loser"] = winner_loser[0]
+        
+
+    # print(str(data))
 
     encrypted_data = aes_encrypt(str(data))
 
@@ -166,7 +187,7 @@ def post_stats(data_dir, config):
         "appId": APP_ID,
         "data": encrypted_data,
     }
-    # print(post_json)
+    # # print(post_json)
 
     response = post_request(url, data=post_json)
     print(response)
