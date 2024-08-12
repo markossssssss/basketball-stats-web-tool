@@ -120,17 +120,22 @@ def get_team_data_list(team_name, match_id, team_id, data_dir):
         
         if r["姓名"] == "全队":
             continue
+        r["投篮"] = f'{int(r["2分"].split("/")[0]) + int(r["3分"].split("/")[0])}/{int(r["2分"].split("/")[1]) + int(r["3分"].split("/")[1])}'
+        
+        row_dict = {}
+        try:
+            row_dict["uniformNumber"] = r["姓名"].split("号")[0]
+        except IndexError:
+            row_dict["uniformNumber"] = ""
         try:
             r["姓名"] = r["姓名"].split("号")[1]
         except Exception as e:
             pass
-        r["投篮"] = f'{int(r["2分"].split("/")[0]) + int(r["3分"].split("/")[0])}/{int(r["2分"].split("/")[1]) + int(r["3分"].split("/")[1])}'
-        row_dict = {}
         # row_dict["teamId"] = team_id
         # row_dict["gameId"] = match_id
         for term in terms.keys():
             row_dict[term] = str(r[terms[term]])
-        row_dict["uniformNumber"] = r["姓名"].split("号")[0]
+        
         stats_list.append(row_dict)
     # print(stats_list)
     return stats_list
@@ -179,18 +184,18 @@ def post_stats(data_dir, config):
         data["loser"] = winner_loser[0]
         
 
-    # print(str(data))
+    print(str(data))
 
-    encrypted_data = aes_encrypt(str(data))
+    # encrypted_data = aes_encrypt(str(data))
 
-    post_json = {
-        "appId": APP_ID,
-        "data": encrypted_data,
-    }
-    # # print(post_json)
+    # post_json = {
+    #     "appId": APP_ID,
+    #     "data": encrypted_data,
+    # }
+    # # # print(post_json)
 
-    response = post_request(url, data=post_json)
-    print(response)
+    # response = post_request(url, data=post_json)
+    # print(response)
 
 
 
