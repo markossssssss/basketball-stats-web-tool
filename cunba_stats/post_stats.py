@@ -184,18 +184,18 @@ def post_stats(data_dir, config):
         data["loser"] = winner_loser[0]
         
 
-    print(str(data))
+    # print(str(data))
 
-    # encrypted_data = aes_encrypt(str(data))
+    encrypted_data = aes_encrypt(str(data))
 
-    # post_json = {
-    #     "appId": APP_ID,
-    #     "data": encrypted_data,
-    # }
-    # # # print(post_json)
+    post_json = {
+        "appId": APP_ID,
+        "data": encrypted_data,
+    }
+    # # print(post_json)
 
-    # response = post_request(url, data=post_json)
-    # print(response)
+    response = post_request(url, data=post_json)
+    print(response)
 
 
 
