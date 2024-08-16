@@ -132,7 +132,7 @@ def get_team_data_list(team_name, match_id, team_id, data_dir):
         except Exception as e:
             pass
         if r["姓名"] == "":
-            r["姓名"] == "未知"
+            r["姓名"] = "未知"
         # row_dict["teamId"] = team_id
         # row_dict["gameId"] = match_id
         for term in terms.keys():
