@@ -131,6 +131,8 @@ def get_team_data_list(team_name, match_id, team_id, data_dir):
             r["姓名"] = r["姓名"].split("号")[1]
         except Exception as e:
             pass
+        if r["姓名"] == "":
+            r["姓名"] == "未知"
         # row_dict["teamId"] = team_id
         # row_dict["gameId"] = match_id
         for term in terms.keys():
@@ -174,9 +176,14 @@ def post_stats(data_dir, config):
 
     # print(scores)
 
+
+
     winner_loser = [{"teamId":f"{team_ids[0]}", "score": f"{int(scores[0])}"}, {"teamId":f"{team_ids[1]}", "score": f"{int(scores[1])}"}]
     
-    if scores[0] > scores[1]:
+    print(winner_loser)
+
+    print(scores)
+    if int(scores[0]) > int(scores[1]):
         data["winner"] = winner_loser[0]
         data["loser"] = winner_loser[1]
     else:
