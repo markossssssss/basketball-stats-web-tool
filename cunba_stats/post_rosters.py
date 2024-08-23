@@ -94,11 +94,15 @@ def get_team_dicts(teams, matches, team_datas):
         play_number_dict = {}
         team_data = team_datas[matches[team]]
         for i, r in team_data.iterrows():
-            if np.isnan(r["号码"]):
+            try:
+                number = r["号码"]
+            except Exception as e:
+                number = r["球衣号"]
+            if np.isnan(number):
                 continue
-            play_number_dict[f'{int(r["号码"])}号{r["姓名"]}'] = int(r["号码"])
-        for i in range(1, 6):
-            play_number_dict[f"未知{i}"] = ""
+            play_number_dict[f'{int(number)}号{r["姓名"]}'] = int(number)
+        # for i in range(1, 6):
+        #     play_number_dict[f"未知{i}"] = ""
             
 
         play_number_dicts.append(play_number_dict)
@@ -117,8 +121,11 @@ if __name__ == "__main__":
     teams = response['team_names']
     team_ids = response['team_ids']
 
+    print(teams, team_ids)
+
 
     team_data_from_csv = pd.read_excel(args.data_dir, sheet_name=None)
+    # print(team_data_from_csv)
 
 
     matches = match_teams(teams, team_data_from_csv)
@@ -132,7 +139,7 @@ if __name__ == "__main__":
         exit(0)
     for i, team in enumerate(target_teams):
         data = {
-            'team_id': str(team_ids[i]),
+            'team_id': str(team_ids[teams.index(team)]),
             'players_dict': str(players_dicts[i])
         }
 
