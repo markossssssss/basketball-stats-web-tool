@@ -12,7 +12,7 @@ from better_ffmpeg_progress import FfmpegProcess
 
 
 HIGHLIGHT_PLAYTIME_DICT = {"进球": (6, 2), "盖帽": (3, 2), "助攻": (7, 3), "抢断": (2, 3), "3分": (4, 4), "4分": (4, 4), "2分": (4, 4),
-                           "篮板": (3, 3), "不进": (6, 3), "失误": (6, 3), "囧": (4, 4)}
+                           "篮板": (3, 3), "不进": (6, 3), "失误": (4, 3), "囧": (4, 4)}
 
 DATA_ON_COVER_BASELINE = {"得分": 4, "助攻": 2, "篮板": 3, "抢断": 1, "盖帽": 1, "真实命中率": 0.45, "效率值": 8}
 
@@ -96,7 +96,7 @@ class BaseHighlightModelFast():
     def init_missed_data(self):
         self.missed_collections_team_players = [
             {name: PlayerHighLightCollection(self.team_names[i], name) for name in self.basketball_events.player_names[i]} for i in range(self.num_teams)]
-
+        self.missed_collections_whole_team = [TeamHighLightCollection(self.team_names[i]) for i in range(self.num_teams)]
 
     def parse_fool_highlight(self):
         for i, r in self.highlight_data.iterrows():
@@ -179,18 +179,26 @@ class BaseHighlightModelFast():
         for i, r in self.missed_data.iterrows():
             team_idx  = self.team_names.index(r["Team"])
             obj_team_idx = self._get_team_idx(r["Object"])
-            if r["Info"] == "不进":
-                self.missed_collections_team_players[team_idx][r["Player"]].add(
-                    HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
+            # if r["Info"] == "不进":
+            #     self.missed_collections_team_players[team_idx][r["Player"]].add(
+            #         HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
+            #     self.missed_collections_whole_team[team_idx].add(
+            #         HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
             if r["Event"] == "失误":
                 self.missed_collections_team_players[team_idx][r["Player"]].add(
+                    HighLight(r["Event"], r["Quarter"], r["OriginQuarterTime"]))
+                self.missed_collections_whole_team[team_idx].add(
                     HighLight(r["Event"], r["Quarter"], r["OriginQuarterTime"]))
             if r["Event"] == "抢断":
                 self.missed_collections_team_players[obj_team_idx][r["Object"]].add(
                     HighLight(r["Event"], r["Quarter"], r["OriginQuarterTime"]))
-            if r["Event"] == "盖帽":
-                self.missed_collections_team_players[obj_team_idx][r["Object"]].add(
+                self.missed_collections_whole_team[obj_team_idx].add(
                     HighLight(r["Event"], r["Quarter"], r["OriginQuarterTime"]))
+            # if r["Event"] == "盖帽":
+            #     self.missed_collections_team_players[obj_team_idx][r["Object"]].add(
+            #         HighLight(r["Event"], r["Quarter"], r["OriginQuarterTime"]))
+            #     self.missed_collections_whole_team[obj_team_idx].add(
+            #         HighLight(r["Event"], r["Quarter"], r["OriginQuarterTime"]))
 
 
     def get_target_stats(self, target_stats):
@@ -247,6 +255,11 @@ class BaseHighlightModelFast():
 
         self.missed_collections_team_players[team_idx][player].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
 
+    def get_all_team_missed_highlight(self, music_path=None):
+        for team in self.team_names:
+            target_path = os.path.join(self.game_dir, f"{team}{self.video_dir_postfix}", f"{team}_失误.{self.target_postfix}")
+            team_idx = self.team_names.index(team)
+            self.missed_collections_whole_team[team_idx].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
 
     def get_all_teams_highlights(self, music_path=None):
         for i in range(self.num_teams):
@@ -276,6 +289,8 @@ class BaseHighlightModelFast():
                     self.collections_team_players[team_id][name].add_video_cover(self.basketball_events.player_stats[team_id], video_path, get_cover=add_cover, font_path=self.font_path, music_path=music_path_new, logo_path=self.logo_path, match_date=self.basketball_events.match_date, match_place=self.basketball_events.court_name, match_time=self.basketball_events.match_time)
         for i in range(len(self.team_names)):
             del_file(os.path.join(self.game_dir, self.team_names[i]), "ts", self.video_dir_postfix)
+
+    
     def get_all_highlights(self, music_path=None, target_stats=None, add_cover=True, filtrate=False):
         if filtrate: 
             target_stats = ["scores", "blocks"]
@@ -299,6 +314,7 @@ class BaseHighlightModelFast():
 
         if self.config["match_type"] == "友谊赛":
             self.get_all_teams_highlights(music_path=music_path)
+        self.get_all_team_missed_highlight()
         for i in range(len(self.team_names)):
             del_file(os.path.join(self.game_dir, self.team_names[i]), "ts", self.video_dir_postfix)
 
