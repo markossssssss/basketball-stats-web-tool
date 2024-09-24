@@ -32,7 +32,9 @@ def highlight(arg, target_stats=("scores", "assists", "blocks"), add_cover=True,
     hlc = BaseHighlightModelFast(arg.data_dir, arg.font_path, arg.logo_path, video_dir_postfix=video_dir_postfix)
 
     hlc.get_all_highlights(music_path=get_music(args), target_stats=target_stats, add_cover=add_cover, filtrate=filtrate)
-    # hlc.get_all_team_missed_highlight()
+    hlc.get_all_team_tos_highlight()
+    hlc.get_all_players_missed_highlight()
+    # hlc.get_misse
 
 
 def get_music(args):
