@@ -14,7 +14,7 @@ from better_ffmpeg_progress import FfmpegProcess
 HIGHLIGHT_PLAYTIME_DICT = {"进球": (6, 2), "盖帽": (3, 2), "助攻": (7, 3), "抢断": (2, 3), "3分": (4, 4), "4分": (4, 4), "2分": (4, 4),
                            "篮板": (3, 3), "不进": (6, 3), "失误": (4, 3), "囧": (4, 4)}
 
-DATA_ON_COVER_BASELINE = {"得分": 4, "助攻": 2, "篮板": 3, "抢断": 1, "盖帽": 1, "真实命中率": 0.45, "效率值": 8}
+DATA_ON_COVER_BASELINE = {"得分": 1, "助攻": 1, "篮板": 1, "抢断": 1, "盖帽": 1, "真实命中率": 0.45, "效率值": 8}
 
 class BaseHighlightModelFast():
     def __init__(self, game_dir, font_path=None, logo_path=None, video_dir_postfix=""):
@@ -663,7 +663,7 @@ def mix_audio(input_path, audio_file_path, output_path):
         '-i', temp_audio_file,
         '-i', audio_file_path,
         '-filter_complex',  # 开始定义复杂的滤镜链
-        'amix=inputs=2:duration=first:dropout_transition=2',  # 混合两个音频流
+        'amix=inputs=2:duration=longest:dropout_transition=2',  # 混合两个音频流
         '-c:a', 'aac',  # 输出AAC音频
         '-loglevel', 'quiet',
         mixed_audio_file
