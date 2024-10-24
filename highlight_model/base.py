@@ -678,6 +678,7 @@ def mix_audio(input_path, audio_file_path, output_path):
         '-c:a', 'copy',  # 复制混合后的音频流
         '-map', '0:v:0',  # 保留原视频流
         '-map', '1:a:0',  # 替换音频流
+        '-shortest',
         '-y',
         '-loglevel', 'quiet',
         output_path  
