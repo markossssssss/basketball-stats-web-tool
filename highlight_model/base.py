@@ -227,6 +227,8 @@ class BaseHighlightModelFast():
                 music_path = random.choice(music_path)
         target_path = os.path.join(self.game_dir, f"{self.team_names[0]}{self.video_dir_postfix}", "highlight_all.mp4")
         self.highlight_all_teams.download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
+        del_file(os.path.join(self.game_dir, self.team_names[0]), "ts", self.video_dir_postfix)
+
         
 
     def get_fool_highlight(self, music_path=None):
@@ -259,12 +261,16 @@ class BaseHighlightModelFast():
         # print(self.videos, self.quarter_video_lens, music_path, target_path)
 
         self.missed_collections_team_players[team_idx][player].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
+        del_file(os.path.join(self.game_dir, self.team_names[team_idx]), "ts", self.video_dir_postfix)
+
 
     def get_all_team_tos_highlight(self, music_path=None):
         for team in self.team_names:
             target_path = os.path.join(self.game_dir, f"{team}{self.video_dir_postfix}", f"{team}_失误.{self.target_postfix}")
             team_idx = self.team_names.index(team)
             self.tos_collections_whole_team[team_idx].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
+            del_file(os.path.join(self.game_dir, self.team_names[team_idx]), "ts", self.video_dir_postfix)
+
 
     def get_all_teams_highlights(self, music_path=None):
         for i in range(self.num_teams):
@@ -301,6 +307,8 @@ class BaseHighlightModelFast():
             for player in self.collections_team_players[team_id]:
                 target_path = os.path.join(self.game_dir, f"{team}{self.video_dir_postfix}", f"missed_{player}.{self.target_postfix}")
                 self.missed_collections_team_players[team_id][player].download_highlight(self.videos, self.quarter_video_lens, None, target_path)
+            del_file(os.path.join(self.game_dir, self.team_names[team_id]), "ts", self.video_dir_postfix)
+
 
     def get_all_highlights(self, music_path=None, target_stats=None, add_cover=True, filtrate=False):
         if filtrate: 
