@@ -22,7 +22,7 @@ import platform
 matplotlib.rc('font', family='SimHei', weight='bold')
 plt.rcParams['axes.unicode_minus'] = False
 system = platform.system()
-if system == "Windows":
+if system == "Darwin":
     plt.rcParams['font.family'] = ['Arial Unicode MS']
 
 avg_title = "JUSHOOP平均"
