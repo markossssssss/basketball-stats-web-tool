@@ -297,7 +297,7 @@ class FriendshipMatchStatsModel(BaseStatsModel):
                     # col_label_divider_kw={"linestyle": "-", "linewidth": 1},
                     # row_divider_kw={"color": colors["bg"], "lw": 2},
                     # column_border_kw={"color": colors["bg"], "lw": 2},
-                    textprops={"ha": "center"}
+                    textprops={"ha": "center", "weight": "bold"}
                     )
         return tab
     

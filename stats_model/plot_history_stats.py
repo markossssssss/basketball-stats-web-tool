@@ -15,11 +15,15 @@ import random
 import argparse
 from multiprocessing import Process
 from . import decimal_to_percent
+import platform
+
 
 # 中文乱码和坐标轴负号处理。
 matplotlib.rc('font', family='SimHei', weight='bold')
 plt.rcParams['axes.unicode_minus'] = False
-plt.rcParams['font.family'] = ['Arial Unicode MS']
+system = platform.system()
+if system == "Windows":
+    plt.rcParams['font.family'] = ['Arial Unicode MS']
 
 avg_title = "JUSHOOP平均"
 
