@@ -416,7 +416,7 @@ class BaseStatsModel():
                 for stat_item in self.target_stats:
                         if stat_item in high_level_stats:
                             continue
-                        print(stat_item)
+                        # print(stat_item)
                         value = eval("self.get_{}('{}', {})".format(stat_item, "all", i))
                         row[self.terms[stat_item]] = value
                 self.player_stats[i] = append(self.player_stats[i], row)
@@ -439,12 +439,22 @@ class BaseStatsModel():
         
             return sum(list(self.player_stats[0]["得分"])), sum(list(self.player_stats[1]["得分"]))
 
+    def get_background_img(self, wide=False):
+        bg_dir = "backgrounds"
+        prefix = "background_wide" if wide else "background"
+        try:
+            background_config = self.config["bg"]
+            background_path = f'{prefix}_{background_config}.png'
+        except:
+            background_path = f'{prefix}.png'
+        image = plt.imread(os.path.join(bg_dir, background_path))
+        return image
 
     def plot_stats_single_team(self, team_idx, show=False, save=None, title=None):
         if self.player_stats is None:
             self.get_stats()
         fig, ax = plt.subplots(figsize=(21.1, 10), dpi=80)
-        image = plt.imread('background_wide_mcdavid.png')
+        image = self.get_background_img(wide=True)
         background_ax = plt.axes([0, 0, 1, 1])
         background_ax.set_zorder(-1) # set the background subplot behind the others
         background_ax.imshow(image, aspect='auto')
@@ -466,12 +476,12 @@ class BaseStatsModel():
         
 
         if len(self.team_names) == 2:
-            sub_title_txt = "{}vs{}{}{}".format(self.team_names[team_idx], self.team_names[1-team_idx], blanks * " ", info_txt)
+            sub_title_txt = "{}vs{}".format(self.team_names[team_idx], self.team_names[1-team_idx])
         else:
             sub_title_txt = ""
 
         txt_length = len(sub_title_txt) + len(info_txt)
-        blanks = int((58 - txt_length) * 5)
+        blanks = int((52 - txt_length) * 5)
         
         plt.suptitle("{}{}{}".format(sub_title_txt, blanks * " ", info_txt), fontdict={"family": FONT, "color": "#fefefe"}, fontsize=25,
                      x=0.5, y=0.88, fontweight="bold")
@@ -488,7 +498,7 @@ class BaseStatsModel():
 
     def plot_stats_both_team(self, show=False, save=None, title=None):
         fig = plt.figure(num=1, figsize=(17.46*1.6, 10*1.6), dpi=80)
-        image = plt.imread('background_mcdavid.png')
+        image = self.get_background_img(wide=False)
         background_ax = plt.axes([0, 0, 1, 1])
         background_ax.set_zorder(-1) # set the background subplot behind the others
         background_ax.imshow(image, aspect='auto')
@@ -525,7 +535,7 @@ class BaseStatsModel():
                   y=2)
         
         txt_length = len(game_scores_txt) + len(info_txt)
-        blanks = int((68 - txt_length) * 5)
+        blanks = int((62 - txt_length) * 5)
 
         # plt.rcParams["text.color"] = "#000000"
         plt.suptitle("{}{}{}".format(game_scores_txt, blanks * " ", info_txt),
@@ -1389,7 +1399,7 @@ class BaseStatsModel():
         return 1
     
     def get_games_wined(self, name, team_id):
-        print(self.player_stats[0].head)
+        # print(self.player_stats[0].head)
         scores = (sum(list(self.player_stats[0]["得分"])), sum(list(self.player_stats[1]["得分"])))
         return scores.index(max(scores)) == team_id
 
