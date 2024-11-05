@@ -573,9 +573,10 @@ class BaseStatsModel():
             table_col_defs.append(self.get_col(stat_name, team_idx, team_name=self.team_names[team_idx], text_color=colors["text"]))
 
         player_stats = self.player_stats[team_idx].copy()
-        player_stats["姓名"] = player_stats.index
-        player_stats["姓名"][-1] = "全队"
-        player_stats.set_index("姓名", inplace=True)
+        if self.get_team_stats:
+            player_stats["姓名"] = player_stats.index
+            player_stats["姓名"][-1] = "全队"
+            player_stats.set_index("姓名", inplace=True)
 
         # ax.set_ylim(-0.5, 1 - 0.5)
 
