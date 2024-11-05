@@ -184,7 +184,7 @@ class FriendshipMatchStatsModel(BaseStatsModel):
                     "time", "scores", "assists", "rebounds", "steals", "blocks", "blocked", "2pts", "3pts",
                     "fts", "od_rebounds", "off_rebounds", "def_rebounds", "fouls", "tos", "make_fouls", "USG", "TS", "EFF", "oncourt_per_scores",
                     "oncourt_per_loses", "oncourt_scores", "oncourt_loses", "rounds", "plus_minus", "oncourt_off_rounds", "oncourt_def_rounds",
-                    "oncourt_team_rebounds", "oncourt_opponent_rebounds", "used_rounds", "games_played"]
+                    "oncourt_team_rebounds", "oncourt_opponent_rebounds", "used_rounds", "games_played", "games_wined"]
 
     # 需要展示的数据项
     table_cols = ["上场时间", "得分", "篮板", "助攻", "抢断", "盖帽", "2分", "3分", "罚球",
@@ -244,9 +244,6 @@ class FriendshipMatchStatsModel(BaseStatsModel):
                         print(oncourt_players)
                         print(r)
                         raise ValueError
-
-    def get_ColDef(self, term):
-        pass
 
     def plot_table(self, fig, ax, team_idx, plot_team_name=True, row_height=1, wide=True):
         ROW_HEIGHT = row_height

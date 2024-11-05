@@ -1,19 +1,23 @@
 import numpy as np
+from plottable.cmap import normed_cmap
+from matplotlib.colors import LinearSegmentedColormap
 from plottable import Table, ColDef
+from plottable.table import create_cell, ColumnType, Row
 import matplotlib
 import matplotlib.pyplot as plt
+import os
+import pandas as pd
+from typing import Callable
+from typing import Any, Callable, Dict, List, Tuple
+from numbers import Number
 import argparse
 import json
-import pandas as pd
 import matplotlib.font_manager as font_manager
 import matplotlib.gridspec as gridspec
 
-
-
 from datetime import datetime
-import os
-
 import platform
+
 
 FONT = 'LogoSC Unbounded Sans'
 
@@ -21,6 +25,158 @@ fonts = font_manager.fontManager.ttflist
 
 # 获取字体名称及其路径
 font_info = [(font.name, font.fname) for font in fonts]
+
+MY_TITLE_TEXT_PRORPS = {"fontsize": 26, "ha": "center", "weight": "bold", "color": "#d48401", "family": "LogoSC Unbounded Sans"}
+
+ROW_HEIGHT = 0.8
+
+class myTable(Table):
+
+    def _init_rows(self):
+        """Initializes the Tables Rows."""
+        self.rows = {}
+        num_lines = len(self.df.to_records())
+        label_y = -1 - (-num_lines // 2) * (1 - ROW_HEIGHT)
+        self.col_label_row = self._get_col_label_row(label_y, self._get_column_titles())
+        for idx, values in enumerate(self.df.to_records()):
+            self.rows[idx] = self._get_row(idx, values, num_lines)
+
+        
+
+    def _get_col_label_row(self, idx: int, content: List[str | Number]) -> Row:
+        """Creates the Column Label Row.
+
+        Args:
+            idx (int): index of the Row
+            content (List[str  |  Number]): content that is plotted as text.
+
+        Returns:
+            Row: Column Label Row
+        """
+        widths = self._get_column_widths()
+
+        if "height" in self.col_label_cell_kw:
+            height = self.col_label_cell_kw["height"]
+        else:
+            height = 1
+
+        x = 0
+
+        row = Row(cells=[], index=idx)
+
+        for col_idx, (colname, width, _content) in enumerate(
+            zip(self.column_names, widths, content)
+        ):
+            col_def = self.column_definitions[colname]
+            textprops = MY_TITLE_TEXT_PRORPS
+
+            # don't apply bbox around text in header
+            if "bbox" in textprops:
+                textprops.pop("bbox")
+
+            cell = create_cell(
+                column_type=ColumnType.STRING,
+                xy=(
+                    x,
+                    idx + 1 - height,
+                ),  # if height is different from 1 we need to adjust y
+                content=_content,
+                row_idx=idx,
+                col_idx=col_idx,
+                width=width,
+                height=height,
+                rect_kw=self.col_label_cell_kw,
+                textprops=textprops,
+                ax=self.ax,
+            )
+
+            row.append(cell)
+            cell.draw()
+
+            x += width
+
+        return row
+    
+    def _get_row(self, idx: int, content: List[str | Number], num_lines=0) -> Row:
+        widths = self._get_column_widths()
+
+        x = 0
+
+        row = Row(cells=[], index=idx)
+        middle = num_lines // 2
+        idx -= (idx - middle) * (1 - ROW_HEIGHT)
+
+        for col_idx, (colname, width, _content) in enumerate(
+            zip(self.column_names, widths, content)
+        ):
+            col_def = self.column_definitions[colname]
+
+
+            if "plot_fn" in col_def:
+                plot_fn = col_def.get("plot_fn")
+                plot_kw = col_def.get("plot_kw", {})
+
+                cell = create_cell(
+                    column_type=ColumnType.SUBPLOT,
+                    xy=(x, idx),
+                    content=_content,
+                    plot_fn=plot_fn,
+                    plot_kw=plot_kw,
+                    row_idx=idx,
+                    col_idx=col_idx,
+                    width=width,
+                    height=ROW_HEIGHT,
+                    rect_kw=self.cell_kw,
+                    ax=self.ax,
+                )
+
+            else:
+                textprops = self._get_column_textprops(col_def)
+
+                cell = create_cell(
+                    column_type=ColumnType.STRING,
+                    xy=(x, idx),
+                    content=_content,
+                    row_idx=idx,
+                    col_idx=col_idx,
+                    width=width,
+                    height=ROW_HEIGHT,
+                    rect_kw=self.cell_kw,
+                    textprops=textprops,
+                    ax=self.ax,
+                )
+
+            row.append(cell)
+            self.columns[colname].append(cell)
+            self.cells[(idx, col_idx)] = cell
+            cell.draw()
+
+            x += width
+
+        return row
+
+
+def my_normed_cmap(
+    s: pd.Series, cmap: matplotlib.colors.LinearSegmentedColormap, num_stds: float = 2.5
+) -> Callable:
+    
+    vmin, vmax = -15, 15
+
+    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
+    
+    m = myScalarMappable(norm=norm, cmap=cmap)
+
+
+    return m.to_rgba
+
+class myScalarMappable(matplotlib.cm.ScalarMappable):
+    def to_rgba(self, x, alpha=None, bytes=False, norm=True):
+        x = np.ma.asarray(x)
+        if norm:
+            x = self.norm(x)
+        rgba = self.cmap(x, alpha=alpha, bytes=bytes)
+        return rgba
+
 
 # # 输出所有可用字体名称及其路径
 # print("可用字体及其路径:")
@@ -74,6 +230,7 @@ terms = {
     "oncourt_opponent_rebounds": "在场对方篮板数",
     "used_rounds": "回合占有数",
     "games_played": "场次",
+    "games_wined": "胜场",
     "blocked": "被盖",
     "atpts": "出手",
     "fts_atpts": "罚球出手",
@@ -134,7 +291,7 @@ def df_filter(data_df, Event=None, Team=None, Player=None, Object=None, Info=Non
     return result_df
 
 # 需要等所有基础数据都出来之后才能计算的数据
-high_level_stats = ["EFF", "USG", "oncourt_per_scores", "oncourt_per_loses", "plus_minus"]
+high_level_stats = ["EFF", "USG", "oncourt_per_scores", "oncourt_per_loses", "plus_minus", "games_wined"]
 
 
 def append(df, row_dict):
@@ -259,11 +416,11 @@ class BaseStatsModel():
                 for stat_item in self.target_stats:
                         if stat_item in high_level_stats:
                             continue
+                        print(stat_item)
                         value = eval("self.get_{}('{}', {})".format(stat_item, "all", i))
                         row[self.terms[stat_item]] = value
                 self.player_stats[i] = append(self.player_stats[i], row)
 
-            
         for stat_item in high_level_stats:
             if stat_item in self.target_stats:
                 eval("self.get_{}()".format(stat_item))
@@ -301,15 +458,22 @@ class BaseStatsModel():
 
         JUSHOOP_title_txt = self.JUSHOOP_title_txt if title is None else title
 
-    
+
         plt.title(label=JUSHOOP_title_txt,
                   fontdict={"family": FONT, "size": 40, "color": "#e7410a"},
                   y=0.92)
         
-        txt_length = len(self.team_names[team_idx]) + len(self.team_names[1-team_idx]) + 2 + len(info_txt)
-        blanks = int((58 - txt_length) * 5)
+        
 
-        plt.suptitle("{}vs{}{}{}".format(self.team_names[team_idx], self.team_names[1-team_idx], blanks * " ", info_txt), fontdict={"family": FONT, "color": "#fefefe"}, fontsize=25,
+        if len(self.team_names) == 2:
+            sub_title_txt = "{}vs{}{}{}".format(self.team_names[team_idx], self.team_names[1-team_idx], blanks * " ", info_txt)
+        else:
+            sub_title_txt = ""
+
+        txt_length = len(sub_title_txt) + len(info_txt)
+        blanks = int((58 - txt_length) * 5)
+        
+        plt.suptitle("{}{}{}".format(sub_title_txt, blanks * " ", info_txt), fontdict={"family": FONT, "color": "#fefefe"}, fontsize=25,
                      x=0.5, y=0.88, fontweight="bold")
 
 
@@ -320,6 +484,7 @@ class BaseStatsModel():
         if save is not None:
             plt.savefig(os.path.join(save, "{}".format(self.team_names[team_idx])), dpi=300)
         plt.close()
+
 
     def plot_stats_both_team(self, show=False, save=None, title=None):
         fig = plt.figure(num=1, figsize=(17.46*1.6, 10*1.6), dpi=80)
@@ -378,6 +543,102 @@ class BaseStatsModel():
             plt.savefig(os.path.join(save, "{}_vs_{}".format(self.team_names[0], self.team_names[1])), dpi=300)
         plt.close()
 
+    def plot_table(self, fig, ax, team_idx, plot_team_name=True, row_height=1, wide=True):
+        ROW_HEIGHT = row_height
+        colors = {
+            "even": (0.4, 0.4, 0.4, 0.8),
+            "bg": (0.2, 0.2, 0.2, 0.8),
+            "title": "#123456",
+            "text": "#FFFFFF"
+        }
+
+        text_color = "#FFFFFF"
+
+        if not wide:
+            MY_TITLE_TEXT_PRORPS["fontsize"] = 21
+        else:
+            MY_TITLE_TEXT_PRORPS["fontsize"] = 26
+
+
+        # fig.set_facecolor(bg_color)
+        ax.set_facecolor(colors["bg"])
+
+        team_title = self.team_names[team_idx] if plot_team_name else ""
+
+        table_col_defs = []
+        table_col_defs.append(self.get_col("姓名", team_idx, title=team_title, team_name=self.team_names[team_idx], text_color=colors["text"]))
+        if not self.user_table_cols is None:
+            self.table_cols = self.user_table_cols
+        for stat_name in self.table_cols:
+            table_col_defs.append(self.get_col(stat_name, team_idx, team_name=self.team_names[team_idx], text_color=colors["text"]))
+
+        player_stats = self.player_stats[team_idx].copy()
+        player_stats["姓名"] = player_stats.index
+        player_stats["姓名"][-1] = "全队"
+        player_stats.set_index("姓名", inplace=True)
+
+        # ax.set_ylim(-0.5, 1 - 0.5)
+
+
+        tab = myTable(player_stats,
+                    ax=ax,
+                    column_definitions=table_col_defs,
+                    row_dividers=False,
+                    col_label_divider=False,
+                    footer_divider=False,
+                    columns=self.table_cols,
+                    even_row_color=colors["even"],
+                    # footer_divider_kw={"color": colors["bg"], "lw": 2},
+                    # col_label_divider_kw={"linestyle": "-", "linewidth": 1},
+                    # row_divider_kw={"color": colors["bg"], "lw": 2},
+                    # column_border_kw={"color": colors["bg"], "lw": 2},
+                    textprops={"ha": "center", "weight": "bold"}
+                    )
+        return tab
+    
+    def get_col(self, stat_name, team_idx, team_name="", text_color="#FFFFFF", title=None):
+        width = 0.5
+        formatter = None
+        text_cmap = None
+        cmap = LinearSegmentedColormap.from_list(
+            name="bugw", colors=["#FF0000", "#e0e8df", "#00EE76"], N=256
+        )
+        cmap_r = LinearSegmentedColormap.from_list(
+            name="bugw", colors=["#00EE76", "#e0e8df", "#FF0000"], N=256
+        )
+        if title is None:
+            title = self.terms_en[stat_name] if self.use_en else stat_name
+        if stat_name == "姓名":
+            return ColDef(stat_name, width=1.3, textprops={"fontsize": 22, "weight": "bold", "color": text_color, "family": "Microsoft YaHei"}, title=team_name)
+        elif stat_name in ["上场时间", "后场+前场篮板", "球权使用率", "真实命中率"]:
+            width = 1.0
+            if "+" in stat_name:
+                title = title.replace("+", "\n+")
+            if "率" in stat_name:
+                formatter=decimal_to_percent
+        elif stat_name == "在场得分(10回合)":
+            width = 1.0
+            title = title.replace("(", "\n(")
+            text_cmap = normed_cmap(self.player_stats[team_idx]["在场得分(10回合)"], cmap=cmap, num_stds=1)
+        elif stat_name == "正负值":
+            # print("hello")
+            text_cmap = my_normed_cmap(self.player_stats[team_idx]["正负值"], cmap=cmap, num_stds=1.2)
+        elif stat_name == "在场失分(10回合)":
+            width = 1.0
+            title = title.replace("(", "\n(")
+            text_cmap = normed_cmap(self.player_stats[team_idx]["在场失分(10回合)"], cmap=cmap_r, num_stds=1)
+        elif stat_name == "效率值":
+            text_cmap = normed_cmap(self.player_stats[team_idx]["效率值"], cmap=cmap, num_stds=1.2)
+
+        if len(stat_name) >= 4 and width == 0.5:
+            width = 0.7
+        elif len(stat_name) == 3 and width == 0.5:
+            width = 0.6
+
+        return ColDef(stat_name, width=width, title=title,
+                   text_cmap=text_cmap, formatter=formatter, textprops={"fontsize": 20, "color": text_color, "family": "Microsoft YaHei"})
+    
+
     def print_info(self):
         print(self.team_names)
         print(self.player_names)
@@ -426,7 +687,6 @@ class BaseStatsModel():
 
 
 
-
     def df_query(self, Event, Team=None, Player=None, Object=None, Info=None):
         df = eval(f"self.{Event}_df")
         query_str = "1&"
@@ -471,7 +731,6 @@ class BaseStatsModel():
         scores += len(assisted_df[assisted_df.Info == "3分"]) * 3 + len(assisted_df[assisted_df.Info == "2分"]) * 2
 
         return scores
-
 
 
     def get_TS(self, name, team_id):
@@ -1127,10 +1386,11 @@ class BaseStatsModel():
         
     def get_games_played(self, name, team_id):
         return 1
-
-    def plot_table(self, fig, ax, team_idx, plot_team_name=True):
-        raise NotImplementedError
     
+    def get_games_wined(self, name, team_id):
+        print(self.player_stats[0].head)
+        scores = (sum(list(self.player_stats[0]["得分"])), sum(list(self.player_stats[1]["得分"])))
+        return scores.index(max(scores)) == team_id
 
 
 if __name__ == '__main__':
