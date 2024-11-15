@@ -329,8 +329,8 @@ class BaseHighlightModelFast():
 
         self.special_highlight_level1.download_highlight(self.videos, self.quarter_video_lens, None, target_path1)
         self.special_highlight_level2.download_highlight(self.videos, self.quarter_video_lens, None, target_path2)
-        for team_id, team in enumerate(self.team_names):
-            del_file(os.path.join(self.game_dir, self.team_names[team_id]), "ts", self.video_dir_postfix)
+        
+        del_file(self.game_dir, "ts", self.video_dir_postfix)
 
 
 
