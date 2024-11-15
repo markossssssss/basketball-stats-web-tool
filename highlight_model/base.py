@@ -130,12 +130,13 @@ class BaseHighlightModelFast():
                 self.collections_whole_team[team_idx].add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
                 self.highlight_all_teams.add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
             
+            event_type = r["Info"] if r["Info"] != "" else r["Event"]
             if r["Description"] == "有点小帅":
-                self.special_highlight_level1.add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
+                self.special_highlight_level1.add(HighLight(event_type, r["Quarter"], r["OriginQuarterTime"]))
 
             elif r["Description"] == "精彩绝伦":
-                self.special_highlight_level1.add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
-                self.special_highlight_level2.add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
+                self.special_highlight_level1.add(HighLight(event_type, r["Quarter"], r["OriginQuarterTime"]))
+                self.special_highlight_level2.add(HighLight(event_type, r["Quarter"], r["OriginQuarterTime"]))
 
     def find_team(self, player):
         for team_idx, players in enumerate(self.basketball_events.player_names):
