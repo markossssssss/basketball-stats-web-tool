@@ -36,6 +36,7 @@ def highlight(arg, target_stats=("scores", "assists", "blocks"), add_cover=True,
     # hlc.get_all_team_tos_highlight()   # 全队失误集锦
     # hlc.get_all_players_missed_highlight()   # 个人打铁集锦
     # hlc.get_all_in_one_highlight()   # 全场集锦
+    hlc.get_special_highlight() # 精彩绝伦&有点小帅
 
 
 def get_music(args):

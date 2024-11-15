@@ -61,6 +61,7 @@ class BaseHighlightModelFast():
         self.init_player_highlight_data()
         self.init_negative_stats()
         self.init_fool_data()
+        self.init_special_highlight_data() # 人工打点的精彩进球
 
         self.negative_data = event_data[(event_data.Info == "不进") | (event_data.Event == "失误") | (event_data.Event == "抢断") | (event_data.Event == "盖帽")]
         self.highlight_data = event_data[(event_data.Event == "囧") |
@@ -85,6 +86,11 @@ class BaseHighlightModelFast():
     def init_team_highlight_data(self):
         self.collections_whole_team = [TeamHighLightCollection(self.team_names[i]) for i in range(self.num_teams)]
         self.highlight_all_teams = TeamHighLightCollection(self.team_names[0])
+
+    def init_special_highlight_data(self):
+        self.special_highlight_level1 = TeamHighLightCollection(self.team_names[0])
+        self.special_highlight_level2 = TeamHighLightCollection(self.team_names[0])
+
         
     def init_fool_data(self):
         self.fool_highlight_whole_team = TeamHighLightCollection(self.team_names[0])
@@ -123,6 +129,13 @@ class BaseHighlightModelFast():
             elif r["Event"] == "助攻":
                 self.collections_whole_team[team_idx].add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
                 self.highlight_all_teams.add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
+            
+            if r["Description"] == "有点小帅":
+                self.special_highlight_level1.add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
+
+            elif r["Description"] == "精彩绝伦":
+                self.special_highlight_level1.add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
+                self.special_highlight_level2.add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
 
     def find_team(self, player):
         for team_idx, players in enumerate(self.basketball_events.player_names):
@@ -308,6 +321,17 @@ class BaseHighlightModelFast():
                 target_path = os.path.join(self.game_dir, f"{team}{self.video_dir_postfix}", f"missed_{player}.{self.target_postfix}")
                 self.missed_collections_team_players[team_id][player].download_highlight(self.videos, self.quarter_video_lens, None, target_path)
             del_file(os.path.join(self.game_dir, self.team_names[team_id]), "ts", self.video_dir_postfix)
+
+    def get_special_highlight(self):
+        target_path1 = os.path.join(self.game_dir, f"有点小帅.{self.target_postfix}")
+        target_path2 = os.path.join(self.game_dir, f"精彩绝伦.{self.target_postfix}")
+
+        self.special_highlight_level1.download_highlight(self.videos, self.quarter_video_lens, None, target_path1)
+        self.special_highlight_level2.download_highlight(self.videos, self.quarter_video_lens, None, target_path2)
+        for team_id, team in enumerate(self.team_names):
+            del_file(os.path.join(self.game_dir, self.team_names[team_id]), "ts", self.video_dir_postfix)
+
+
 
 
     def get_all_highlights(self, music_path=None, target_stats=None, add_cover=True, filtrate=False):
