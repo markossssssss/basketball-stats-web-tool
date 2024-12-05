@@ -4,6 +4,9 @@ tags_dict = {}
 cookies_dict_main = {}
 cookies_dict_teams = {}
 cookies_dict_random = {}
+cookies_dict_test = {}
+
+cookies_dict_test["marko"] = [{'domain': '.dewu.com', 'expiry': 1717737453, 'httpOnly': False, 'name': 'dewu_creator_duToken', 'path': '/', 'sameSite': 'Lax', 'secure': False, 'value': '3848621afeeaf620ed8b07f800519922f8bd279d6dee5ac6358550b4846a2f959687e3ef71aabe2d7d8f4c07f7ddbd9d|97811804|1717132653|a14006d7fad1d4d35df77dbdc664b3b5a307ff02|2-0'}, {'domain': '.dewu.com', 'expiry': 1717737453, 'httpOnly': False, 'name': 'dewu_creator_x-auth-token', 'path': '/', 'sameSite': 'Lax', 'secure': False, 'value': 'Bearer%20eyJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3MTcxMzI2NTMsImV4cCI6MTc0ODY2ODY1MywidXNlcklkIjo5NzgxMTgwNCwiaXNHdWVzdCI6ZmFsc2V9.QJTXHIL7zaAVydXvK1QtHfd2zVQF2ez_rV9NMqPCgbK4VIsDyfhDqvNhl5kXnm6DRsGoi0XSiaYtar1MSUCIiCPAs7XzD3R17i7FvDeeJkJ58PMC5u5NTNxIq7S7OXJFBnofaGZXn4ldWZelB31qvN9GZ8TrPfGFi8NhLD-Z8kjv-nFJ40JD-aHMlKNyhs--JU0RMM5iuNg5OueYz-b3BxSjJKCdAUpgAKOZ5fA2BDVsvZ8fbn1x-fxiXHDB-DeZNywtTPuaxYo7mN0SHBoqeUCDAmzx-fdrtKAkyRNXbJIntRo5kaPuFn6ZBAXiRKSL8gG1siS7FlBJyI7zuurwDQ'}, {'domain': '.dewu.com', 'expiry': 1717737453, 'httpOnly': False, 'name': 'dewu_creator_xdwMark', 'path': '/', 'sameSite': 'Lax', 'secure': False, 'value': '97811804'}, {'domain': '.dewu.com', 'expiry': 1751692634, 'httpOnly': False, 'name': 'sensorsdata2015jssdkcross', 'path': '/', 'sameSite': 'Lax', 'secure': False, 'value': '%7B%22distinct_id%22%3A%2218fcd14a89b8c3-023f7da5ae1bac-1a525637-1296000-18fcd14a89cd52%22%2C%22first_id%22%3A%22%22%2C%22props%22%3A%7B%22%24latest_traffic_source_type%22%3A%22%E7%9B%B4%E6%8E%A5%E6%B5%81%E9%87%8F%22%2C%22%24latest_search_keyword%22%3A%22%E6%9C%AA%E5%8F%96%E5%88%B0%E5%80%BC_%E7%9B%B4%E6%8E%A5%E6%89%93%E5%BC%80%22%2C%22%24latest_referrer%22%3A%22%22%7D%2C%22identities%22%3A%22eyIkaWRlbnRpdHlfY29va2llX2lkIjoiMThmY2QxNGE4OWI4YzMtMDIzZjdkYTVhZTFiYWMtMWE1MjU2MzctMTI5NjAwMC0xOGZjZDE0YTg5Y2Q1MiJ9%22%2C%22history_login_id%22%3A%7B%22name%22%3A%22%22%2C%22value%22%3A%22%22%7D%2C%22%24device_id%22%3A%2218fcd14a89b8c3-023f7da5ae1bac-1a525637-1296000-18fcd14a89cd52%22%7D'}, {'domain': '.dewu.com', 'expiry': 1717737453, 'httpOnly': False, 'name': 'dewu_creator_userInfo', 'path': '/', 'sameSite': 'Lax', 'secure': False, 'value': '{%22userId%22:97811804%2C%22userName%22:%22%E4%BA%A4%E5%A4%A7%E5%8E%9A%E5%8D%AB%E9%A9%AC%E8%80%83%22%2C%22icon%22:%22https://image-cdn.poizon.com/app/2024/other/97811804_byte78951byte_922bd2015dfe3f540bf50f8ecbe6afff_iOS_w768h768.jpg%22%2C%22sex%22:1%2C%22idiograph%22:%22%22%2C%22formatTime%22:%222019.09.23%22%2C%22banned%22:0%2C%22vip%22:0%2C%22amount%22:0%2C%22amountSign%22:%220cf95c2793c31f5a737e808883178761%22%2C%22isOlder%22:1%2C%22isQuestionExpert%22:0%2C%22isAdmin%22:0%2C%22isBindMobile%22:1%2C%22isComplete%22:1%2C%22joinDays%22:1712%2C%22isReadProtocol%22:1%2C%22isCertify%22:0%2C%22mobile%22:%22136****8824%22%2C%22addTime%22:1569222207%2C%22mobileMd5%22:%22dd1dd0c994e0ff2e25e6bdb581eacd31%22%2C%22account%22:%22%22%2C%22accountType%22:0}'}, {'domain': '.dewu.com', 'expiry': 1717171199, 'httpOnly': False, 'name': 'sajssdk_2015_cross_new_user', 'path': '/', 'sameSite': 'Lax', 'secure': False, 'value': '1'}]
 
 cookies_dict_main["marko"] = [{'domain': '.dewu.com', 'expiry': 1717737453, 'httpOnly': False, 'name': 'dewu_creator_duToken', 'path': '/', 'sameSite': 'Lax', 'secure': False, 'value': '3848621afeeaf620ed8b07f800519922f8bd279d6dee5ac6358550b4846a2f959687e3ef71aabe2d7d8f4c07f7ddbd9d|97811804|1717132653|a14006d7fad1d4d35df77dbdc664b3b5a307ff02|2-0'}, {'domain': '.dewu.com', 'expiry': 1717737453, 'httpOnly': False, 'name': 'dewu_creator_x-auth-token', 'path': '/', 'sameSite': 'Lax', 'secure': False, 'value': 'Bearer%20eyJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3MTcxMzI2NTMsImV4cCI6MTc0ODY2ODY1MywidXNlcklkIjo5NzgxMTgwNCwiaXNHdWVzdCI6ZmFsc2V9.QJTXHIL7zaAVydXvK1QtHfd2zVQF2ez_rV9NMqPCgbK4VIsDyfhDqvNhl5kXnm6DRsGoi0XSiaYtar1MSUCIiCPAs7XzD3R17i7FvDeeJkJ58PMC5u5NTNxIq7S7OXJFBnofaGZXn4ldWZelB31qvN9GZ8TrPfGFi8NhLD-Z8kjv-nFJ40JD-aHMlKNyhs--JU0RMM5iuNg5OueYz-b3BxSjJKCdAUpgAKOZ5fA2BDVsvZ8fbn1x-fxiXHDB-DeZNywtTPuaxYo7mN0SHBoqeUCDAmzx-fdrtKAkyRNXbJIntRo5kaPuFn6ZBAXiRKSL8gG1siS7FlBJyI7zuurwDQ'}, {'domain': '.dewu.com', 'expiry': 1717737453, 'httpOnly': False, 'name': 'dewu_creator_xdwMark', 'path': '/', 'sameSite': 'Lax', 'secure': False, 'value': '97811804'}, {'domain': '.dewu.com', 'expiry': 1751692634, 'httpOnly': False, 'name': 'sensorsdata2015jssdkcross', 'path': '/', 'sameSite': 'Lax', 'secure': False, 'value': '%7B%22distinct_id%22%3A%2218fcd14a89b8c3-023f7da5ae1bac-1a525637-1296000-18fcd14a89cd52%22%2C%22first_id%22%3A%22%22%2C%22props%22%3A%7B%22%24latest_traffic_source_type%22%3A%22%E7%9B%B4%E6%8E%A5%E6%B5%81%E9%87%8F%22%2C%22%24latest_search_keyword%22%3A%22%E6%9C%AA%E5%8F%96%E5%88%B0%E5%80%BC_%E7%9B%B4%E6%8E%A5%E6%89%93%E5%BC%80%22%2C%22%24latest_referrer%22%3A%22%22%7D%2C%22identities%22%3A%22eyIkaWRlbnRpdHlfY29va2llX2lkIjoiMThmY2QxNGE4OWI4YzMtMDIzZjdkYTVhZTFiYWMtMWE1MjU2MzctMTI5NjAwMC0xOGZjZDE0YTg5Y2Q1MiJ9%22%2C%22history_login_id%22%3A%7B%22name%22%3A%22%22%2C%22value%22%3A%22%22%7D%2C%22%24device_id%22%3A%2218fcd14a89b8c3-023f7da5ae1bac-1a525637-1296000-18fcd14a89cd52%22%7D'}, {'domain': '.dewu.com', 'expiry': 1717737453, 'httpOnly': False, 'name': 'dewu_creator_userInfo', 'path': '/', 'sameSite': 'Lax', 'secure': False, 'value': '{%22userId%22:97811804%2C%22userName%22:%22%E4%BA%A4%E5%A4%A7%E5%8E%9A%E5%8D%AB%E9%A9%AC%E8%80%83%22%2C%22icon%22:%22https://image-cdn.poizon.com/app/2024/other/97811804_byte78951byte_922bd2015dfe3f540bf50f8ecbe6afff_iOS_w768h768.jpg%22%2C%22sex%22:1%2C%22idiograph%22:%22%22%2C%22formatTime%22:%222019.09.23%22%2C%22banned%22:0%2C%22vip%22:0%2C%22amount%22:0%2C%22amountSign%22:%220cf95c2793c31f5a737e808883178761%22%2C%22isOlder%22:1%2C%22isQuestionExpert%22:0%2C%22isAdmin%22:0%2C%22isBindMobile%22:1%2C%22isComplete%22:1%2C%22joinDays%22:1712%2C%22isReadProtocol%22:1%2C%22isCertify%22:0%2C%22mobile%22:%22136****8824%22%2C%22addTime%22:1569222207%2C%22mobileMd5%22:%22dd1dd0c994e0ff2e25e6bdb581eacd31%22%2C%22account%22:%22%22%2C%22accountType%22:0}'}, {'domain': '.dewu.com', 'expiry': 1717171199, 'httpOnly': False, 'name': 'sajssdk_2015_cross_new_user', 'path': '/', 'sameSite': 'Lax', 'secure': False, 'value': '1'}]
 
@@ -48,11 +51,57 @@ tags_dict["上海村BA开打"] = '<a contenteditable="false" data-record="{&quot
 tags_dict["我在得物打篮球"] = '<a contenteditable="false" data-record="{&quot;tagId&quot;:859422,&quot;tagName&quot;:&quot;我在得物打篮球&quot;}" data-value="859422" data-type="5" class="selected_topic">#我在得物打篮球</a>'
 
 tags_dict["AllyGo"] = '<a contenteditable="false" data-record="{&quot;userId&quot;:2270532973,&quot;userName&quot;:&quot;AllyGo&quot;}" data-value="2270532973" data-type="0" class="at-user">@AllyGo</a>'
+tags_dict["专业护膝来袭"] = '<a contenteditable="false" data-record="{&quot;tagId&quot;:1734297,&quot;tagName&quot;:&quot;专业护膝来袭&quot;}" data-value="1734297" data-type="5" class="selected_topic">#专业护膝来袭</a>'
+tags_dict["球场上的保护神"] = '<a contenteditable="false" data-record="{&quot;tagId&quot;:1734299,&quot;tagName&quot;:&quot;球场上的保护神&quot;}" data-value="1734299" data-type="5" class="selected_topic">#球场上的保护神</a>'
+tags_dict['寻找篮球未来之星'] = '<a contenteditable="false" data-record="{&quot;tagId&quot;:1117876,&quot;tagName&quot;:&quot;寻找篮球未来之星&quot;}" data-value="1117876" data-type="5" class="selected_topic">#寻找篮球未来之星</a>'
+tags_dict['得物看看我是几档球员'] = '<a contenteditable="false" data-record="{&quot;tagId&quot;:1117823,&quot;tagName&quot;:&quot;得物看看我是几档球员&quot;}" data-value="1117823" data-type="5" class="selected_topic">#得物看看我是几档球员</a>'
+tags_dict['上海就是打球联赛'] = '<a contenteditable="false" data-record="{&quot;tagId&quot;:1734298,&quot;tagName&quot;:&quot;上海就是打球联赛&quot;}" data-value="1734298" data-type="5" class="selected_topic">#上海就是打球联赛</a>'
 
 
-def get_tags(names):
+titles = [
+    '篮球必备护膝，守护你的球场梦想。',
+    '强韧篮球护膝，助力热血篮球梦。',
+    '篮球爱好者福音，专业护膝来袭。',
+    '炫酷篮球护膝，守护你的篮球激情。',
+    '专业篮球护膝，为你的拼搏加把劲。',
+    '篮球护膝，让你的篮球之路更精彩。',
+    '优质篮球护膝，呵护你的篮球生涯。',
+    '篮球场上的保护神，护膝等你来。',
+    '魅力篮球护膝，为热爱全力以赴。',
+    '篮球必备护膝，释放你的无限潜能。',
+    '极致篮球护膝，开启荣耀之旅。',
+    '灵动篮球护膝，突破运动极限。',
+    '高能篮球护膝，激发无限可能。'
+]
+
+descriptions = [
+    '迈克达威专业篮球护膝，全方位防护，让你尽情驰骋。',
+    '迈克达威稳固支撑，舒适防护，为热爱保驾护航。',
+    '迈克达威高品质护膝，保护膝盖，释放无限活力。',
+    '迈克达威时尚外观，强大功能，伴你畅享篮球时光。',
+    '迈克达威缓冲减震，耐磨耐用，是你的得分助手。',
+    '迈克达威贴心防护，无惧挑战，成就你的篮球辉煌。',
+    '迈克达威精湛工艺，可靠品质，为你守护每一刻。',
+    '迈克达威强力防护膝盖，助你展现最佳状态。',
+    '迈克达威舒适贴合，防护升级，共赴篮球盛宴。',
+    '迈克达威稳定支撑膝盖，让你在球场活力满满。',
+    '迈克达威超强防护，助力篮球梦，开拓新境传奇不朽。',
+    '迈克达威灵活舒适，超越界限，超越灵动的界限。',
+    '迈克达威持续防护，提供动力，高能持续的源动力。'
+]
+
+
+def get_tags_htmls(names):
+    def _check_exists(tag_name):
+        if not tag_name in tags_dict.keys():
+            raise ValueError(f"tag:{tag_name} 不存在")
+
     if type(names) == str:
+        _check_exists(names)
         return get_tag(names)
+    
+    for name in names:
+        _check_exists(name)
     return [get_tag(name) for name in names]
 
 

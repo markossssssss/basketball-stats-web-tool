@@ -342,7 +342,7 @@ class BaseHighlightModelFast():
         for team_id in range(self.num_teams):
             for name in self.collections_team_players[team_id]:
                 if filtrate: 
-                    if self.basketball_events.player_stats[team_id]["得分"][name] < 6:
+                    if self.basketball_events.player_stats[team_id]["得分"][name] < 2:
                         continue
                 music_path_new = music_path
                 if music_path is not None:

@@ -1,2 +1,2 @@
 from .dewu import DewuVideoUploader
-from .resources import get_tags, get_cookies
+from .resources import get_cookies, titles, descriptions

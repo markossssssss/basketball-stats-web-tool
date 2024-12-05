@@ -9,6 +9,7 @@ import os
 from selenium.webdriver import Chrome, ChromeOptions, Safari
 import shutil
 import argparse
+from .resources import get_tags_htmls
 
 class DewuVideoUploader(object):
     def __init__(self, target="chrome"):
@@ -39,7 +40,7 @@ class DewuVideoUploader(object):
         self.driver.get('https://creator.dewu.com/release')
         self.driver.maximize_window()
         self._set_cookie(cookies)
-        # sleep(10)
+
         self._set_file_input(file_path)
         sleep(1)
         self._set_title(title)
@@ -89,6 +90,7 @@ class DewuVideoUploader(object):
         title_box.send_keys(title)
         
     def _set_des(self, des, tags):
+        tags_htmls = get_tags_htmls(tags)
         class_name = "richTextareaMain___EoGYP"
         des_box = WebDriverWait(self.driver, 2).until(EC.presence_of_element_located((By.CLASS_NAME, class_name)))
         # self.driver.execute_script("arguments[0].focus();", des_box)
@@ -96,7 +98,7 @@ class DewuVideoUploader(object):
         # sleep(1)
         self.driver.execute_script(f'document.getElementsByClassName(\'{class_name}\')[0].innerHTML+=\'{des}\'')
         sleep(1)
-        for i, html in enumerate(tags):
+        for i, html in enumerate(tags_htmls):
             # html = self.tags_dict[tag]
             command = f'document.getElementsByClassName(\'{class_name}\')[0].innerHTML+=\'{html}\''
             self.driver.execute_script(command)
@@ -113,13 +115,26 @@ class DewuVideoUploader(object):
         # sleep(2)
         
 
-# if __name__ == "__main__":
-#     parser = argparse.ArgumentParser(description='Run Example')
-#     parser.add_argument('data_dir', type=str, help='path of config file')
-#     args = parser.parse_args()
-#     dewu = DewuVideoUploader()
-#     # channel_names = cookies_dict.keys()
-#     channel_names = ['marko']
+if __name__ == "__main__":
+    from resources import *
+    import time
+    parser = argparse.ArgumentParser(description='Run Example')
+    parser.add_argument('video_path', type=str, help='path of config file')
+    args = parser.parse_args()
+    dewu = DewuVideoUploader()
+    # cookies = cookies_dict_random["robot1"]
+    cookies = cookies_dict_main["marko"]
+    title = "篮球必备护膝，守护你的球场梦想! 一起来看迈克达威队Marko精彩集锦!"
+    des = '上海“就是打球”联赛Marko的高光集锦。迈克达威专业篮球护膝，全方位防护，让你尽情驰骋。'
+    tags = ['上海就是打球联赛', '专业护膝来袭', '球场上的保护神', '得物看看我是几档球员', '寻找篮球未来之星']
+
+    dewu.driver.get('https://creator.dewu.com/release')
+    dewu.driver.maximize_window()
+    dewu.upload(file_path=args.video_path, cookies=cookies, title=title, des=des, tags=tags)
+    dewu.close()
+    # dewu.driver.refresh()
+
+    
 #     # video_dir = "/Users/Markos/Desktop/test_videos"
 #     video_dir = args.data_dir
 #

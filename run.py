@@ -2,7 +2,7 @@ import json
 import pandas as pd
 from stats_model import auto_select_stats_model
 from highlight_model import BaseHighlightModelFast
-from dewu import DewuVideoUploader, get_tags, get_cookies
+from dewu import DewuVideoUploader, get_cookies, descriptions, titles
 from cunba_stats import post_stats
 # from
 import os
@@ -36,7 +36,7 @@ def highlight(arg, target_stats=("scores", "assists", "blocks"), add_cover=True,
     # hlc.get_all_team_tos_highlight()   # 全队失误集锦
     # hlc.get_all_players_missed_highlight()   # 个人打铁集锦
     # hlc.get_all_in_one_highlight()   # 全场集锦
-    hlc.get_special_highlight() # 精彩绝伦&有点小帅
+    # hlc.get_special_highlight() # 精彩绝伦&有点小帅
 
 
 def get_music(args):
@@ -88,10 +88,8 @@ def dewu_post(video_dir, channels_set):
     video_names = []
     team_video_names = []
 
-    tags = get_tags(["上海村BA开打", "我在得物打篮球", "AllyGo"])
-    # tags = get_tags(["AllyGo"])
+    tags = ['上海就是打球联赛', '专业护膝来袭', '球场上的保护神', '得物看看我是几档球员', '寻找篮球未来之星']
 
-    court_name = video_dir.split("_")[-1]
 
     team_names = os.listdir(video_dir)
     team_names = [name for name in team_names if name[0] != '.']
@@ -126,19 +124,26 @@ def dewu_post(video_dir, channels_set):
         if team_name.endswith("_dewu"):
             team_name = team_name[:-5]
             if team_name in ["黑队", "白队", "Team A", "Team B", "Team C", "Team D"]:
-                team_postfix = "分站赛"
-                # team_name = f"{court_name}分站赛"
+                team_postfix = ""
+                team_name = ""
+            elif team_name.endswith("队"):
+                team_postfix = ""
             else:
                 team_postfix = "队"
                 # team_name = f"{team_name}队"
-        if player_name in team_name:
-            # 球队集锦
-            title = f"上海村BA来袭! 一起来看{team_name}{team_postfix}精彩集锦!"
+
+        rand_res = random.randint(0, len(titles)-1)
+        title = titles[rand_res]
+        des = descriptions[rand_res]
+        if player_name in team_name: # 球队集锦
+            if team_name == "" and team_postfix == "":
+                continue
+            title += f"一起来看{team_name}{team_postfix}精彩集锦!"
         else:
-            title = f"上海村BA来袭! 一起来看{team_name}{team_postfix}{player_name}精彩集锦!"
+            title += f"一起来看{team_name}{team_postfix}{player_name}精彩集锦!"
 
 
-        des = f"一起来看村BA上海赛区{team_name}{player_name}精彩集锦。 村BA上海赛区由AllyGo赞助、JUSHOOP提供AI集锦服务，参与村BA即能免费获得精彩集锦，还能角逐得物提供的球鞋奖励，快来参与吧！"
+        des += f"参与上海迈克达威-就是打球联赛，你也能获得专属帅气集锦，快来参与吧！"
 
         cookies = get_cookies(channels_set, "random")
 
@@ -173,7 +178,7 @@ if __name__ == "__main__":
     parser.add_argument('-stats', action="store_true", default=False, help='只生成数据')
     parser.add_argument('-highlight', action="store_true", default=False, help='只生成集锦')
     parser.add_argument('-dewu', action="store_true", default=False, help='发布得物视频')
-    parser.add_argument("-dewu_club", type=str, default=None, help='本次发布的俱乐部名字')
+    parser.add_argument('-dewu_no_run', action="store_true", default=False, help='直接发布得物视频，不重新生成')
     parser.add_argument("-music_dir", type=str, default='musics/', help='随机音乐的曲库')
     parser.add_argument("-post_data", action="store_true", default=False, help='随机音乐的曲库')
     args = parser.parse_args()
@@ -181,7 +186,7 @@ if __name__ == "__main__":
     target_stats = ["scores", "assists", "blocks"] # 个人集锦中展示的内容
 
 
-    if not args.dewu:
+    if (not args.dewu and not args.dewu_no_run):
         if not args.highlight:
             get_stats(args)
         if not args.stats:
@@ -190,13 +195,18 @@ if __name__ == "__main__":
             else:
                 multi_process_highlight(args, target_stats, not args.no_cover)
     else:
-        if args.music_path is None:
-            print("发布得物的视频需要指定音乐, 请用-music_path指定")
-            raise ValueError()
-        args.logo_path=None
-        highlight(args, target_stats, not args.no_cover, video_dir_postfix="_dewu", filtrate=True)
+        args.music_path = "random"
+
+        if not args.dewu_no_run:
+            highlight(args, target_stats, not args.no_cover, video_dir_postfix="_dewu", filtrate=True)
+        else:
+            file_names = os.listdir(args.data_dir)
+            for file_name in file_names:
+                print(file_name)
+                if os.path.isdir(os.path.join(args.data_dir, file_name)):
+                    os.rename(os.path.join(args.data_dir, file_name), os.path.join(args.data_dir, f"{file_name}_dewu"))
         
-        # channels_set = ["main"]
+        # channels_set = ["test"]
         channels_set = ["main", "random"]
 
         dewu_post(args.data_dir, channels_set)
