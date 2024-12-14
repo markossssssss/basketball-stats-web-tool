@@ -9,6 +9,9 @@ import os
 import argparse
 import shutil
 import random
+from oss import client, M3u8Parser
+import requests
+from tqdm import tqdm
 
 
 def multi_process_highlight_func(i, data_dir, music_path, font_path, logo_path, target_stats, add_cover=True, video_dir_postfix=""):
@@ -28,9 +31,8 @@ def multi_process_highlight_func(i, data_dir, music_path, font_path, logo_path, 
         pass
 
 
-def highlight(arg, target_stats=("scores", "assists", "blocks"), add_cover=True, video_dir_postfix="", filtrate=False):
-    hlc = BaseHighlightModelFast(arg.data_dir, arg.font_path, arg.logo_path, video_dir_postfix=video_dir_postfix)
-
+def highlight(arg, target_stats=("scores", "assists", "blocks"), add_cover=True, video_dir_postfix="", filtrate=False, duration=None):
+    hlc = BaseHighlightModelFast(arg.data_dir, arg.font_path, arg.logo_path, video_dir_postfix=video_dir_postfix, duration=duration)
     hlc.get_all_highlights(music_path=get_music(args), target_stats=target_stats, add_cover=add_cover, filtrate=filtrate)
    
     # hlc.get_all_team_tos_highlight()   # 全队失误集锦
@@ -165,6 +167,52 @@ def dewu_post(video_dir, channels_set):
     dewu_model.close()
         # break
 
+def cunba_batch_highlight(args):
+    finished = []
+
+    # 卡住
+    # problemed1 = ["20240925_河南沁阳星锐_宁夏吴忠教育", "20240925_宁夏吴忠教育_辽宁大连中源牧业", "20241001_四川成都米兰世家_甘肃肃北雪域先锋", "20240825_湖南道县好百年_吉林好空气", "20240925_辽宁大连中源牧业_黑龙江宝清", "20241002_江西南康家具队_四川成都米兰世家", "20240823_吉林新空气_宁夏吴忠市", "20241002_甘肃临夏州_广西德保矮马", "20241003_山东东营汇东集团_广西德保矮马", "20240925_黑龙江宝清_河北黄儿营"]
+    problemed2 = ["20240920_甘肃肃北雪域先锋_安徽芜湖六郎", "20240823_吉林新空气_宁夏吴忠市", "20240925_辽宁大连中源牧业_黑龙江宝清", "20241002_甘肃临夏州_广西德保矮马", "20240810_山西翼城凤翔园林_贵州黑今骑士", 
+                  "20241003_山东东营汇东集团_广西德保矮马", "20241002_江西南康家具队_四川成都米兰世家", "20241004_甘肃临夏州_山东东营汇东集团", "20241004_安徽蚌埠胡巷_广西德保矮马",
+                  "20241003_甘肃临夏州_安徽蚌埠胡巷", "20240913_广东湾区商学院_浙江千年永宁"] # 视频数据对不上
+
+    problemed = [] + problemed2
+    root_dir = args.data_dir
+    args.logo_path = "logo8.png"
+
+    for match_name in tqdm(os.listdir(args.data_dir)):
+        print(match_name)
+        if match_name in (finished + problemed) or match_name.startswith("."):
+            continue
+        args.data_dir = os.path.join(root_dir, match_name)
+        cunba_highlight(args)
+
+
+
+    
+
+def cunba_highlight(args):
+    parser = M3u8Parser()
+    config = json.load(open(os.path.join(args.data_dir, "config.json"),encoding='utf-8'))
+    match_id = config['match_id']
+
+    r = eval(requests.get(url=f"http://jushoop1977.com/api/get-inside-id/{match_id}").text)
+
+    code = r['code']
+    match_id = r["data"]
+
+    play_list = client.get_play_list(f"{match_id}", "vod")
+    if play_list is None:
+        print("获取播放列表失败")
+        print(args.data_dir)
+        return
+    parser.parse_string(play_list, merge=False)
+    parser.export_file(os.path.join(args.data_dir, "1.m3u8"), f'http://jushoop-live-videos.oss-cn-shanghai-internal.aliyuncs.com/{match_id}/', export_type="vod")
+
+    args.logo_path = "logo8.png"
+    highlight(args, target_stats, not args.no_cover, filtrate=True, duration=int(parser.duration))
+    
+
 
 
 if __name__ == "__main__":
@@ -177,16 +225,24 @@ if __name__ == "__main__":
     parser.add_argument('-no_cover', action="store_true", default=False, help='不生成封面')
     parser.add_argument('-stats', action="store_true", default=False, help='只生成数据')
     parser.add_argument('-highlight', action="store_true", default=False, help='只生成集锦')
+    parser.add_argument('-cunba', action="store_true", default=False, help='贵州村ba，云端下载视频')
+    parser.add_argument('-cunba_batch', action="store_true", default=False, help='贵州村ba批量处理，云端下载视频')
     parser.add_argument('-dewu', action="store_true", default=False, help='发布得物视频')
     parser.add_argument('-dewu_no_run', action="store_true", default=False, help='直接发布得物视频，不重新生成')
+    parser.add_argument('-dewu_no_run_batch', action="store_true", default=False, help='批量发布得物视频，不重新生成')
     parser.add_argument("-music_dir", type=str, default='musics/', help='随机音乐的曲库')
     parser.add_argument("-post_data", action="store_true", default=False, help='随机音乐的曲库')
     args = parser.parse_args()
 
     target_stats = ["scores", "assists", "blocks"] # 个人集锦中展示的内容
 
-
-    if (not args.dewu and not args.dewu_no_run):
+    if args.cunba:
+        cunba_highlight(args)
+        exit()
+    if args.cunba_batch:
+        cunba_batch_highlight(args)
+        exit()
+    if (not args.dewu and not args.dewu_no_run and not args.dewu_no_run_batch):
         if not args.highlight:
             get_stats(args)
         if not args.stats:
@@ -196,20 +252,34 @@ if __name__ == "__main__":
                 multi_process_highlight(args, target_stats, not args.no_cover)
     else:
         args.music_path = "random"
+        # channels_set = ["test"]
+        channels_set = ["main", "random"]
 
-        if not args.dewu_no_run:
-            highlight(args, target_stats, not args.no_cover, video_dir_postfix="_dewu", filtrate=True)
-        else:
+        if args.dewu:
+            highlight(args, target_stats, not args.no_cover, video_dir_postfix="_dewu", filtrate=False)
+            dewu_post(args.data_dir, channels_set)
+        elif args.dewu_no_run:
             file_names = os.listdir(args.data_dir)
             for file_name in file_names:
                 print(file_name)
                 if os.path.isdir(os.path.join(args.data_dir, file_name)):
                     os.rename(os.path.join(args.data_dir, file_name), os.path.join(args.data_dir, f"{file_name}_dewu"))
-        
-        # channels_set = ["test"]
-        channels_set = ["main", "random"]
+            dewu_post(args.data_dir, channels_set)
+        elif args.dewu_no_run_batch:
+            target_dirs = os.listdir(args.data_dir)
+            for target_dir in target_dirs:
+                target_dir = os.path.join(args.data_dir, target_dir)
+                if os.path.isdir(target_dir):
+                    file_names = os.listdir(target_dir)
+                    for file_name in file_names:
+                        print(file_name)
+                        if os.path.isdir(os.path.join(target_dir, file_name)):
+                            os.rename(os.path.join(target_dir, file_name), os.path.join(target_dir, f"{file_name}_dewu"))
+                    dewu_post(target_dir, channels_set)
 
-        dewu_post(args.data_dir, channels_set)
+        
+        
+
 
 # tmp = events.event_data[1 & (events.event_data.Player != "MARKO") & (events.event_data.Event == "助攻")]
 # print(tmp)

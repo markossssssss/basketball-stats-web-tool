@@ -38,7 +38,7 @@ class DewuVideoUploader(object):
         
 
         self.driver.get('https://creator.dewu.com/release')
-        self.driver.maximize_window()
+        # self.driver.maximize_window()
         self._set_cookie(cookies)
 
         self._set_file_input(file_path)
