@@ -194,6 +194,9 @@ elif system == "Darwin":
     font_type = "Microsoft YaHei"
     font_manager.fontManager.addfont("/Users/Markos/Library/Fonts/LogoSCUnboundedSans-Regular-2.ttf")
     font_manager.fontManager.addfont("/Users/Markos/Library/Fonts/微软雅黑粗体.ttf")
+else:
+    font_type = "Microsoft YaHei"
+    
 matplotlib.rc("font", family=font_type)
 plt.rcParams['font.family'] = [font_type]
 

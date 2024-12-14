@@ -17,7 +17,7 @@ HIGHLIGHT_PLAYTIME_DICT = {"进球": (6, 2), "盖帽": (3, 2), "助攻": (7, 3),
 DATA_ON_COVER_BASELINE = {"得分": 1, "助攻": 1, "篮板": 1, "抢断": 1, "盖帽": 1, "真实命中率": 0.45, "效率值": 8}
 
 class BaseHighlightModelFast():
-    def __init__(self, game_dir, font_path=None, logo_path=None, video_dir_postfix=""):
+    def __init__(self, game_dir, font_path=None, logo_path=None, video_dir_postfix="", duration=None):
         self.config = json.load(open(os.path.join(game_dir, "config.json"),encoding='utf-8'))
         self.game_dir = game_dir
 
@@ -32,7 +32,7 @@ class BaseHighlightModelFast():
         self.font_path = font_path
         self.logo_path = logo_path
 
-        video_postfixes = ['mp4', 'mov', 'MP4', 'MOV', 'avi', 'AVI']
+        video_postfixes = ['mp4', 'mov', 'MP4', 'MOV', 'avi', 'AVI', 'm3u8']
         self.postfix = None
         for postfix in video_postfixes:
             if os.path.exists(os.path.join(game_dir, f"1.{postfix}")):
@@ -42,14 +42,21 @@ class BaseHighlightModelFast():
         if self.postfix is None:
             raise Exception("请检查视频名".format(game_dir))
         
-        self.target_postfix = self.postfix
+        self.target_postfix = self.postfix if self.postfix != "m3u8" else "mp4"
         
-        for i in range(1, self.config["quarters"] + 1):
-            tmp_clip = os.path.join(game_dir, f"{i}.{self.postfix}")
-            self.videos.append(tmp_clip)
-            self.quarter_video_lens.append(get_video_duration(tmp_clip))
+        if not self.postfix == "m3u8":
+            for i in range(1, self.config["quarters"] + 1):
+                tmp_clip = os.path.join(game_dir, f"{i}.{self.postfix}")
+                self.videos.append(tmp_clip)
+                self.quarter_video_lens.append(get_video_duration(tmp_clip))
+        else:
+            if duration is None:
+                raise ValueError("Duration must be provided for m3u8 videos")
+            self.videos.append(os.path.join(game_dir, "1.m3u8"))
+            self.quarter_video_lens = [duration]
 
-        check_video_info_and_reencode(self.videos)
+        if not self.postfix == "m3u8":
+            check_video_info_and_reencode(self.videos)
         
         self.default_target_stats = ["scores", "assists", "blocks"]
 
@@ -131,12 +138,16 @@ class BaseHighlightModelFast():
                 self.highlight_all_teams.add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
             
             event_type = r["Info"] if r["Info"] != "" else r["Event"]
-            if r["Description"] == "有点小帅":
-                self.special_highlight_level1.add(HighLight(event_type, r["Quarter"], r["OriginQuarterTime"]))
+            try:
+                if r["Description"] == "有点小帅":
+                    self.special_highlight_level1.add(HighLight(event_type, r["Quarter"], r["OriginQuarterTime"]))
 
-            elif r["Description"] == "精彩绝伦":
-                self.special_highlight_level1.add(HighLight(event_type, r["Quarter"], r["OriginQuarterTime"]))
-                self.special_highlight_level2.add(HighLight(event_type, r["Quarter"], r["OriginQuarterTime"]))
+                elif r["Description"] == "精彩绝伦":
+                    self.special_highlight_level1.add(HighLight(event_type, r["Quarter"], r["OriginQuarterTime"]))
+                    self.special_highlight_level2.add(HighLight(event_type, r["Quarter"], r["OriginQuarterTime"]))
+            except:
+                pass
+                # print("Error:", "本比赛没有标记精彩程度")
 
     def find_team(self, player):
         for team_idx, players in enumerate(self.basketball_events.player_names):
@@ -333,22 +344,22 @@ class BaseHighlightModelFast():
         del_file(self.game_dir, "ts", self.video_dir_postfix)
 
 
-
-
     def get_all_highlights(self, music_path=None, target_stats=None, add_cover=True, filtrate=False):
         if filtrate: 
             target_stats = ["scores", "blocks"]
         self.parse_player_highlight(target_stats)
         for team_id in range(self.num_teams):
             for name in self.collections_team_players[team_id]:
+                scores = self.basketball_events.player_stats[team_id]["得分"][name]
                 if filtrate: 
-                    if self.basketball_events.player_stats[team_id]["得分"][name] < 2:
+                    if scores < 18:
                         continue
                 music_path_new = music_path
                 if music_path is not None:
                     if type(music_path) == list:
                         music_path_new = random.choice(music_path)
-                target_path = os.path.join(self.game_dir, f"{self.team_names[team_id]}{self.video_dir_postfix}", f"highlight_{name}.{self.target_postfix}")
+                target_path = os.path.join(self.game_dir, f"{self.team_names[team_id]}{self.video_dir_postfix}", f"highlight_{name}_{scores}分.{self.target_postfix}")
+                print("generating: ", target_path)
                 video_path = self.collections_team_players[team_id][name].download_highlight(self.videos, self.quarter_video_lens, music_path_new, target_path)
                 if video_path:
                     self.collections_team_players[team_id][name].add_video_cover(self.basketball_events.player_stats[team_id], video_path, get_cover=add_cover, font_path=self.font_path, music_path=music_path_new, logo_path=self.logo_path, match_date=self.basketball_events.match_date, match_place=self.basketball_events.court_name, match_time=self.basketball_events.match_time)
@@ -356,8 +367,10 @@ class BaseHighlightModelFast():
         # if self.config["match_type"] == "球局":
         #     self.get_all_in_one_highlight(music_path=music_path)
 
-        if self.config["match_type"] == "友谊赛":
-            self.get_all_teams_highlights(music_path=music_path)
+        # if self.config["match_type"] == "友谊赛":
+        #     self.get_all_teams_highlights(music_path=music_path)
+
+
         # self.get_all_team_tos_highlight()
         # self.get_all_players_missed_highlight()
         for i in range(len(self.team_names)):
@@ -378,8 +391,8 @@ class TeamHighLightCollection():
         
 
     def download_highlight(self, videos, quarter_video_lens, music_path=None, result_path=None):
-        if result_path is not None:
-            print(f'generating: {result_path}')
+        # if result_path is not None:
+        #     print(f'generating: {result_path}')
         if not (len(self.data)):
             return 0
         
@@ -471,6 +484,7 @@ class HighLight():
         start_time, end_time = self.start_time, self.end_time
 
         output_file = None
+        # print(videos, quarter_video_lens, dir_name)
         if dir_name is not None:
             output_file = os.path.join(dir_name, f"{os.path.basename(videos[self.quarter - 1]).split('.')[0]}_{start_time}_{end_time}.ts")
 
@@ -495,10 +509,11 @@ def ffmpeg_clip(input_file, start_time, duration, output_file=None):
     # start_time = key_frames[bisect.bisect(key_frames, start_time)]
     # print(start_time)
     #
-    hours, remainder = divmod(start_time, 3600)
-    minutes, seconds = divmod(remainder, 60)
+    # hours, remainder = divmod(start_time, 3600)
+    # minutes, seconds = divmod(remainder, 60)
     # print(start_time)
-    start_hms = f"{int(hours):02d}:{int(minutes):02d}:{seconds:.6f}"
+    # start_hms = f"{int(hours):02d}:{int(minutes):02d}:{seconds:.6f}"
+    # print(start_time)
     # print(start_hms)
 
     # end_id = min(len(key_frames) - 1, bisect.bisect(key_frames, end_time) + 1)
@@ -515,7 +530,9 @@ def ffmpeg_clip(input_file, start_time, duration, output_file=None):
     # 构建FFmpeg命令
     command = [
         'ffmpeg',
-        '-ss', start_hms,  # 剪切开始时间
+        '-protocol_whitelist', 'tcp,file,http,crypto,data',
+        '-copyts',
+        '-ss', f'{start_time}',  # 剪切开始时间
         '-t', f'{duration}',  # 剪切持续时间
         '-i', input_file,  # 先指定输入文件，再指定时间参数，以确保准确 seek
         '-c', 'copy',  # 复制流
@@ -681,6 +698,7 @@ def mix_audio(input_path, audio_file_path, output_path):
     temp_audio_file = os.path.join(os.path.dirname(input_path), f"{prefix}_audio.aac")
     extract_audio_command = [
         'ffmpeg', 
+        '-protocol_whitelist', 'tcp,file,http,crypto,data',
         '-i', input_path,
         '-vn',  # 忽略视频流
         '-c:a', 'aac',  # 编码为AAC音频
@@ -705,6 +723,7 @@ def mix_audio(input_path, audio_file_path, output_path):
 
     new_video_command = [
         'ffmpeg', 
+        '-protocol_whitelist', 'tcp,file,http,crypto,data',
         '-i', input_path,
         '-i', mixed_audio_file,
         '-c:v', 'copy',  # 复制视频流
@@ -877,6 +896,7 @@ def get_key_frames(video_path):
     # 定义ffprobe的命令
     ffprobe_cmd = [
         'ffprobe',
+        '-protocol_whitelist', 'tcp,file,http,crypto,data',
         '-loglevel', 'error',
         '-select_streams', 'v:0',
         '-show_entries', 'packet=pts_time,flags',
@@ -896,10 +916,14 @@ def get_video_info(video_path):
     probe_output = probe_output.strip()
     if probe_output[-1] == ",":
         probe_output = probe_output[:-1]
+    if "\n" in probe_output:
+        probe_output = probe_output.split("\n")[0]
+    # print(probe_output.split(','))
     video_codec, video_tag, width, height, fps, time_base = probe_output.split(',')
     width = int(width)
     height = int(height)
     audio_probe = subprocess.check_output(['ffprobe',
+                                           '-protocol_whitelist', 'tcp,file,http,crypto,data',
                                        '-v', 'error',
                                        '-select_streams', 'a:0',
                                        '-show_entries', 'stream=codec_name,sample_rate',
@@ -907,7 +931,7 @@ def get_video_info(video_path):
                                        video_path]).decode().strip()
     # print(audio_probe)
 
-    audio_codec, sample_rate = audio_probe.split("\n")
+    audio_codec, sample_rate = audio_probe.split("\n")[:2]
     # print(audio_codec, sample_rate)
 
     return video_codec, video_tag, width, height, fps, time_base, audio_codec, sample_rate
@@ -919,7 +943,10 @@ def save_first_frame(input_video_path):
     ffmpeg_command = [
         "ffmpeg",
         "-i", input_video_path,  # 输入视频文件路径
+        '-protocol_whitelist', 'tcp,file,http,crypto,data',
         "-vframes", "1",  # 只提取一帧
+        '-loglevel', 'quiet',
+
         '-y',
         first_frame_path  # 输出图片路径
     ]
@@ -994,13 +1021,16 @@ def reencode(video, target_codec, target_fps, target_resolution):
     os.rename(video, origin_new_name)
     if target_codec == "h264":
         target_codec = "libx264"
-    command = ['ffmpeg', 
+    command = ['ffmpeg',
+               '-protocol_whitelist', 'tcp,file,http,crypto,data',
                '-i', origin_new_name, 
                '-c:v', target_codec, 
                '-r', str(target_fps), 
                '-s', target_resolution,
                '-preset', 'ultrafast',
                '-pix_fmt', 'yuv420p',
+                '-loglevel', 'quiet',
+
                '-c:a', 'copy', 
                video]
     procress = FfmpegProcess(command)
