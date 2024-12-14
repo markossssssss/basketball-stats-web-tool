@@ -9,8 +9,6 @@ import os
 import argparse
 import shutil
 import random
-from oss import client, M3u8Parser
-import requests
 from tqdm import tqdm
 
 
@@ -192,6 +190,8 @@ def cunba_batch_highlight(args):
     
 
 def cunba_highlight(args):
+    from oss import client, M3u8Parser
+    import requests
     parser = M3u8Parser()
     config = json.load(open(os.path.join(args.data_dir, "config.json"),encoding='utf-8'))
     match_id = config['match_id']
