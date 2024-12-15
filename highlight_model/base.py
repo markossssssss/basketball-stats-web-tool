@@ -358,7 +358,7 @@ class BaseHighlightModelFast():
                 if music_path is not None:
                     if type(music_path) == list:
                         music_path_new = random.choice(music_path)
-                target_path = os.path.join(self.game_dir, f"{self.team_names[team_id]}{self.video_dir_postfix}", f"highlight_{name}_{scores}分.{self.target_postfix}")
+                target_path = os.path.join(self.game_dir, f"{self.team_names[team_id]}{self.video_dir_postfix}", f"highlight_{name}.{self.target_postfix}")
                 print("generating: ", target_path)
                 video_path = self.collections_team_players[team_id][name].download_highlight(self.videos, self.quarter_video_lens, music_path_new, target_path)
                 if video_path:
@@ -367,8 +367,8 @@ class BaseHighlightModelFast():
         # if self.config["match_type"] == "球局":
         #     self.get_all_in_one_highlight(music_path=music_path)
 
-        # if self.config["match_type"] == "友谊赛":
-        #     self.get_all_teams_highlights(music_path=music_path)
+        if self.config["match_type"] == "友谊赛":
+            self.get_all_teams_highlights(music_path=music_path)
 
 
         # self.get_all_team_tos_highlight()
