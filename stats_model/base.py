@@ -192,8 +192,8 @@ if system == "Windows":
     font_manager.fontManager.addfont("C:/Users/39727/AppData/Local/Microsoft/Windows/Fonts/LogoSCUnboundedSans-Regular-2.ttf")
 elif system == "Darwin":
     font_type = "Microsoft YaHei"
-    font_manager.fontManager.addfont("/Users/Markos/Library/Fonts/LogoSCUnboundedSans-Regular-2.ttf")
-    font_manager.fontManager.addfont("/Users/Markos/Library/Fonts/微软雅黑粗体.ttf")
+    font_manager.fontManager.addfont("/Users/markoskafouros/Library/Fonts/LogoSCUnboundedSans-Regular-2.ttf")
+    font_manager.fontManager.addfont("/Users/markoskafouros/Library/Fonts/微软雅黑粗体.ttf")
 else:
     font_type = "Microsoft YaHei"
     
@@ -470,11 +470,12 @@ class BaseStatsModel():
         # info_txt = "test"
 
         JUSHOOP_title_txt = self.JUSHOOP_title_txt if title is None else title
+        y = 0.86 if '\n' in JUSHOOP_title_txt else 0.92
 
 
         plt.title(label=JUSHOOP_title_txt,
                   fontdict={"family": FONT, "size": 40, "color": "#e7410a"},
-                  y=0.92)
+                  y=y)
         
         
 
@@ -532,10 +533,12 @@ class BaseStatsModel():
         info_txt = "{} {}".format(self.match_date, self.court_name)
 
         JUSHOOP_title_txt = self.JUSHOOP_title_txt if title is None else title
+
+        y = 1.9 if '\n' in JUSHOOP_title_txt else 2
         
         plt.title(label=JUSHOOP_title_txt,
                   fontdict={"family": FONT, "size": 50, "color": "#e7410a"},
-                  y=2)
+                  y=y)
         
         txt_length = len(game_scores_txt) + len(info_txt)
         blanks = int((62 - txt_length) * 5)
