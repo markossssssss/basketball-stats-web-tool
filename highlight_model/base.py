@@ -256,22 +256,23 @@ class BaseHighlightModelFast():
         target_path = os.path.join(self.game_dir, f"{team}{self.video_dir_postfix}", "highlight_{}.mp4".format(team))
         self.collections_whole_team[team_idx].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
         del_file(os.path.join(self.game_dir, self.team_names[team_idx]), "ts", self.video_dir_postfix)
-    def get_team_def_highlight(self, team_idx, music_path=None):
-        origin_music_path = music_path
-        if origin_music_path is not None:
-            if type(origin_music_path) == list:
-                music_path = random.choice(origin_music_path)
-        team = self.team_names[team_idx]
-        target_path = os.path.join(self.game_dir, f"{team}{self.video_dir_postfix}", "防守集锦_{}.mp4".format(team))
-        self.def_collections_whole_team[team_idx].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
-        del_file(os.path.join(self.game_dir, self.team_names[team_idx]), "ts", self.video_dir_postfix)
+    def get_team_def_highlight(self, music_path=None):
+        for team_idx in range(self.team_num):
+            origin_music_path = music_path
+            if origin_music_path is not None:
+                if type(origin_music_path) == list:
+                    music_path = random.choice(origin_music_path)
+            team = self.team_names[team_idx]
+            target_path = os.path.join(self.game_dir, f"{team}{self.video_dir_postfix}", "防守集锦_{}.mp4".format(team))
+            self.def_collections_whole_team[team_idx].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
+            del_file(os.path.join(self.game_dir, self.team_names[team_idx]), "ts", self.video_dir_postfix)
 
-        if origin_music_path is not None:
-            if type(origin_music_path) == list:
-                music_path = random.choice(origin_music_path)
-        target_path = os.path.join(self.game_dir, f"{team}{self.video_dir_postfix}", "违例犯规合集_{}.mp4".format(team))
-        self.violation_collections_whole_team[team_idx].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
-        del_file(os.path.join(self.game_dir, self.team_names[team_idx]), "ts", self.video_dir_postfix)
+            if origin_music_path is not None:
+                if type(origin_music_path) == list:
+                    music_path = random.choice(origin_music_path)
+            target_path = os.path.join(self.game_dir, f"{team}{self.video_dir_postfix}", "违例犯规合集_{}.mp4".format(team))
+            self.violation_collections_whole_team[team_idx].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
+            del_file(os.path.join(self.game_dir, self.team_names[team_idx]), "ts", self.video_dir_postfix)
         
     def get_all_in_one_highlight(self, music_path=None):
         if music_path is not None:
