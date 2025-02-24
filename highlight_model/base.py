@@ -257,7 +257,7 @@ class BaseHighlightModelFast():
         self.collections_whole_team[team_idx].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
         del_file(os.path.join(self.game_dir, self.team_names[team_idx]), "ts", self.video_dir_postfix)
     def get_team_def_highlight(self, music_path=None):
-        for team_idx in range(self.team_num):
+        for team_idx in range(len(self.team_names)):
             origin_music_path = music_path
             if origin_music_path is not None:
                 if type(origin_music_path) == list:
