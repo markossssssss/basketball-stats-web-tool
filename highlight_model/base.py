@@ -93,6 +93,10 @@ class BaseHighlightModelFast():
     def init_team_highlight_data(self):
         self.collections_whole_team = [TeamHighLightCollection(self.team_names[i]) for i in range(self.num_teams)]
         self.highlight_all_teams = TeamHighLightCollection(self.team_names[0])
+        self.def_collections_whole_team = [TeamHighLightCollection(self.team_names[i]) for i in range(self.num_teams)]
+        self.violation_collections_whole_team = [TeamHighLightCollection(self.team_names[i]) for i in range(self.num_teams)]
+        
+    
 
     def init_special_highlight_data(self):
         self.special_highlight_level1 = TeamHighLightCollection(self.team_names[0])
@@ -136,6 +140,12 @@ class BaseHighlightModelFast():
             elif r["Event"] == "助攻":
                 self.collections_whole_team[team_idx].add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
                 self.highlight_all_teams.add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
+
+            """球队防守集锦 和 违例+犯规集锦"""
+            if r["Event"] == "盖帽" or r["Event"] == "抢断":
+                self.def_collections_whole_team[team_idx].add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
+            elif r["Event"] == "犯规" or r["Event"] == "失误":
+                self.violation_collections_whole_team[team_idx].add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
             
             event_type = r["Info"] if r["Info"] != "" else r["Event"]
             try:
@@ -242,8 +252,25 @@ class BaseHighlightModelFast():
             if type(music_path) == list:
                 music_path = random.choice(music_path)
         team = self.team_names[team_idx]
+
         target_path = os.path.join(self.game_dir, f"{team}{self.video_dir_postfix}", "highlight_{}.mp4".format(team))
         self.collections_whole_team[team_idx].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
+        del_file(os.path.join(self.game_dir, self.team_names[team_idx]), "ts", self.video_dir_postfix)
+    def get_team_def_highlight(self, team_idx, music_path=None):
+        origin_music_path = music_path
+        if origin_music_path is not None:
+            if type(origin_music_path) == list:
+                music_path = random.choice(origin_music_path)
+        team = self.team_names[team_idx]
+        target_path = os.path.join(self.game_dir, f"{team}{self.video_dir_postfix}", "防守集锦_{}.mp4".format(team))
+        self.def_collections_whole_team[team_idx].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
+        del_file(os.path.join(self.game_dir, self.team_names[team_idx]), "ts", self.video_dir_postfix)
+        
+        if origin_music_path is not None:
+            if type(origin_music_path) == list:
+                music_path = random.choice(origin_music_path)
+        target_path = os.path.join(self.game_dir, f"{team}{self.video_dir_postfix}", "违例犯规合集_{}.mp4".format(team))
+        self.violation_collections_whole_team[team_idx].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
         del_file(os.path.join(self.game_dir, self.team_names[team_idx]), "ts", self.video_dir_postfix)
         
     def get_all_in_one_highlight(self, music_path=None):
@@ -359,7 +386,7 @@ class BaseHighlightModelFast():
                     if type(music_path) == list:
                         music_path_new = random.choice(music_path)
                 target_path = os.path.join(self.game_dir, f"{self.team_names[team_id]}{self.video_dir_postfix}", f"highlight_{name}.{self.target_postfix}")
-                print("generating: ", target_path)
+                # print("generating: ", target_path)
                 video_path = self.collections_team_players[team_id][name].download_highlight(self.videos, self.quarter_video_lens, music_path_new, target_path)
                 if video_path:
                     self.collections_team_players[team_id][name].add_video_cover(self.basketball_events.player_stats[team_id], video_path, get_cover=add_cover, font_path=self.font_path, music_path=music_path_new, logo_path=self.logo_path, match_date=self.basketball_events.match_date, match_place=self.basketball_events.court_name, match_time=self.basketball_events.match_time)
