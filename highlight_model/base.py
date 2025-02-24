@@ -11,8 +11,8 @@ from better_ffmpeg_progress import FfmpegProcess
 
 
 
-HIGHLIGHT_PLAYTIME_DICT = {"进球": (6, 2), "盖帽": (3, 2), "助攻": (7, 3), "抢断": (2, 3), "3分": (4, 4), "4分": (4, 4), "2分": (4, 4),
-                           "篮板": (3, 3), "不进": (6, 3), "失误": (4, 3), "囧": (4, 4)}
+HIGHLIGHT_PLAYTIME_DICT = {"进球": (6, 2), "盖帽": (3, 2), "助攻": (7, 3), "抢断": (3, 3), "3分": (4, 4), "4分": (4, 4), "2分": (4, 4),
+                           "篮板": (3, 3), "不进": (6, 3), "失误": (4, 3), "囧": (4, 4), "犯规": (4, 3)}
 
 DATA_ON_COVER_BASELINE = {"得分": 1, "助攻": 1, "篮板": 1, "抢断": 1, "盖帽": 1, "真实命中率": 0.45, "效率值": 8}
 
@@ -143,9 +143,9 @@ class BaseHighlightModelFast():
 
             """球队防守集锦 和 违例+犯规集锦"""
             if r["Event"] == "盖帽" or r["Event"] == "抢断":
-                self.def_collections_whole_team[team_idx].add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
+                self.def_collections_whole_team[team_idx].add(HighLight(r["Event"], r["Quarter"], r["OriginQuarterTime"]))
             elif r["Event"] == "犯规" or r["Event"] == "失误":
-                self.violation_collections_whole_team[team_idx].add(HighLight(r["Info"], r["Quarter"], r["OriginQuarterTime"]))
+                self.violation_collections_whole_team[team_idx].add(HighLight(r["Event"], r["Quarter"], r["OriginQuarterTime"]))
             
             event_type = r["Info"] if r["Info"] != "" else r["Event"]
             try:
@@ -265,7 +265,7 @@ class BaseHighlightModelFast():
         target_path = os.path.join(self.game_dir, f"{team}{self.video_dir_postfix}", "防守集锦_{}.mp4".format(team))
         self.def_collections_whole_team[team_idx].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
         del_file(os.path.join(self.game_dir, self.team_names[team_idx]), "ts", self.video_dir_postfix)
-        
+
         if origin_music_path is not None:
             if type(origin_music_path) == list:
                 music_path = random.choice(origin_music_path)
