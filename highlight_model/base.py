@@ -72,7 +72,7 @@ class BaseHighlightModelFast():
 
         self.negative_data = event_data[(event_data.Info == "不进") | (event_data.Event == "失误") | (event_data.Event == "抢断") | (event_data.Event == "盖帽")]
         self.highlight_data = event_data[(event_data.Event == "囧") |
-            (event_data.Event == "抢断") | (event_data.Event == "篮板") | (event_data.Event == "盖帽") | (
+            (event_data.Event == "抢断") | (event_data.Event == "篮板") | (event_data.Event == "盖帽") | (event_data.Event == "失误") | (event_data.Event == "犯规") | (
                     event_data.Event == "助攻") | ((event_data.Info == "进球") & (event_data.Event == "4分球出手")) | ((event_data.Info == "进球") & (event_data.Event == "3分球出手")) | (
                     (event_data.Info == "进球") & (event_data.Event == "2分球出手"))]
         self.delete_data = event_data[(event_data.Event == "highlight") | (event_data.Info == "bad")]
@@ -263,6 +263,7 @@ class BaseHighlightModelFast():
                 if type(origin_music_path) == list:
                     music_path = random.choice(origin_music_path)
             team = self.team_names[team_idx]
+
             target_path = os.path.join(self.game_dir, f"{team}{self.video_dir_postfix}", "防守集锦_{}.mp4".format(team))
             self.def_collections_whole_team[team_idx].download_highlight(self.videos, self.quarter_video_lens, music_path, target_path)
             del_file(os.path.join(self.game_dir, self.team_names[team_idx]), "ts", self.video_dir_postfix)
